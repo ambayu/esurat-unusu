@@ -1,0 +1,78 @@
+// Prisma schema for E-Surat UNUSU (Tata Naskah & Disposisi Digital)
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model JenisSurat {
+  id        Int      @id @default(autoincrement())
+  kode      String   @unique @db.VarChar(20) // Misal: SKA (Surat Keterangan Aktif), ST (Surat Tugas), SK (Surat Keputusan), REK (Surat Rekomendasi)
+  nama      String   // Misal: Surat Keterangan Aktif Kuliah
+  formatNo  String   // Misal: {NOMOR}/UNUSU/FAST/A/{BULAN}/{TAHUN}
+  peruntukan String  @default("Mahasiswa") // Mahasiswa, Dosen, Tendik, Umum
+  suratList Surat[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("jenis_surat")
+}
+
+model UnitKerja {
+  id        Int      @id @default(autoincrement())
+  kode      String   @unique @db.VarChar(20) // REKTORAT, FAST, FKIP, FAI, BAAK, dsb.
+  nama      String
+  pimpinan  String?
+  jabatan   String?  // Rektor, Dekan, Kepala Biro
+  disposisi Disposisi[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("unit_kerja")
+}
+
+model Surat {
+  id            Int          @id @default(autoincrement())
+  nomorAgenda   String       @unique @db.VarChar(50) // REG-2026-0001
+  nomorSurat    String?      @unique @db.VarChar(100) // 012/UNUSU/FAST/A/X/2026
+  tipeSurat     String       @default("keluar") @db.VarChar(20) // masuk, keluar
+  jenisId       Int
+  jenisSurat    JenisSurat   @relation(fields: [jenisId], references: [id], onDelete: Restrict)
+  pemohonNama   String       // Nama Mahasiswa / Dosen / Instansi
+  pemohonId     String?      // NIM / NIDN
+  pemohonProdi  String?      // Program Studi Sistem Informasi dsb
+  perihal       String       @db.Text
+  keperluan     String?      @db.Text
+  lampiranUrl   String?
+  status        String       @default("diajukan") @db.VarChar(20) // diajukan, diproses, disetujui, ditolak, selesai
+  qrCodeToken   String       @unique @db.VarChar(100) // Token verifikasi keaslian via scan QR
+  signedBy      String?      // Nama pejabat penandatangan
+  signedAt      DateTime?
+  disposisiList Disposisi[]
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([tipeSurat, status])
+  @@map("surat")
+}
+
+model Disposisi {
+  id          Int       @id @default(autoincrement())
+  suratId     Int
+  surat       Surat     @relation(fields: [suratId], references: [id], onDelete: Cascade)
+  dariUnit    String    // Rektor / Dekan
+  keUnitId    Int
+  keUnit      UnitKerja @relation(fields: [keUnitId], references: [id], onDelete: Restrict)
+  instruksi   String    @db.Text // Misal: Tindak lanjuti, Arsipkan, Buatkan draf balasan
+  catatan     String?   @db.Text
+  status      String    @default("menunggu") @db.VarChar(20) // menunggu, diproses, selesai
+  deadline    DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("disposisi")
+}
