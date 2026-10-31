@@ -70,9 +70,13 @@ interface AuthRequest extends Request {
 
 const SSO_ROLE_MAP: Record<string, string> = {
   SUPERADMIN: "admin",
+  ADMIN_ESURAT: "admin",
   DOSEN: "dosen",
   MAHASISWA: "mahasiswa",
 };
+
+/** Role SSO yang diizinkan mengakses panel E-Surat (Admin, Dosen, & Mahasiswa) */
+const ALLOWED_SSO_ROLES = new Set(["SUPERADMIN", "ADMIN_ESURAT", "DOSEN", "MAHASISWA"]);
 
 const mapSsoRole = (role: string): string => SSO_ROLE_MAP[role] ?? "mahasiswa";
 
@@ -139,6 +143,14 @@ app.post("/api/auth/sso", async (req: Request, res: Response) => {
       return res.status(401).json({ success: false, message: ssoPayload?.message || "Verifikasi token SSO gagal" });
     }
 
+    // Tolak login jika role SSO tidak diizinkan di E-Surat
+    if (!ALLOWED_SSO_ROLES.has(ssoUser.role)) {
+      return res.status(403).json({
+        success: false,
+        message: "Akses ditolak. Pengguna tidak memiliki hak akses ke panel E-Surat.",
+      });
+    }
+
     const sessionUser: SsoSession = {
       id: ssoUser.id,
       username: ssoUser.username,
@@ -162,6 +174,19 @@ app.post("/api/auth/sso", async (req: Request, res: Response) => {
 
 // Seluruh API di bawah ini wajib membawa JWT sesi lokal (hasil SSO).
 app.use("/api", authenticate);
+
+/** Middleware otorisasi — hanya role tertentu yang boleh lewat. */
+const requireRole = (...allowed: string[]) =>
+  (req: Request, res: Response, next: NextFunction) => {
+    const role = (req as AuthRequest).user?.role;
+    if (!role || !allowed.includes(role)) {
+      return res.status(403).json({
+        success: false,
+        message: "Akses ditolak. Anda tidak memiliki izin untuk operasi ini.",
+      });
+    }
+    next();
+  };
 
 // 1. Jenis Surat List
 app.get("/api/jenis-surat", async (req: Request, res: Response) => {
@@ -226,7 +251,7 @@ app.get("/api/surat/:id", async (req: Request, res: Response) => {
 });
 
 // 4. Pengajuan Surat Baru (Mahasiswa / Dosen)
-app.post("/api/surat", async (req: Request, res: Response) => {
+app.post("/api/surat", requireRole("admin"), async (req: Request, res: Response) => {
   try {
     const { jenisId, pemohonNama, pemohonId, pemohonProdi, perihal, keperluan } = req.body;
     
@@ -260,7 +285,7 @@ app.post("/api/surat", async (req: Request, res: Response) => {
 });
 
 // 5. Update Status / Approval Surat (Admin / Tata Usaha)
-app.put("/api/surat/:id/status", async (req: Request, res: Response) => {
+app.put("/api/surat/:id/status", requireRole("admin"), async (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id);
     const { status, nomorSurat, signedBy } = req.body;
@@ -285,7 +310,7 @@ app.put("/api/surat/:id/status", async (req: Request, res: Response) => {
 });
 
 // 6. Buat Disposisi Surat
-app.post("/api/surat/:id/disposisi", async (req: Request, res: Response) => {
+app.post("/api/surat/:id/disposisi", requireRole("admin"), async (req: Request, res: Response) => {
   try {
     const suratId = parseInt(req.params.id);
     const { dariUnit, keUnitId, instruksi, catatan, deadline } = req.body;
