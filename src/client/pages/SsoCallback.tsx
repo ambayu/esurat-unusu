@@ -65,7 +65,9 @@ export function SsoCallbackPage() {
         saveSession(response.data.token, response.data.user);
 
         if (!cancelled) {
-          window.location.replace(import.meta.env.BASE_URL);
+          // Arahkan langsung ke dashboard/agenda surat setelah login berhasil
+          const targetUrl = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/dashboard`;
+          window.location.replace(targetUrl);
         }
       } catch (err: any) {
         if (!cancelled) {

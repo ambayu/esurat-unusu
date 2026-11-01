@@ -20,7 +20,7 @@ export function LoginPage() {
         <div>
           <Link
             to="/"
-            className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-500 hover:text-teal-900 transition-colors"
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-500 hover:text-teal-900 transition-colors min-h-[44px] py-2 focus:outline-none focus:ring-2 focus:ring-teal-500 rounded-lg px-2 -ml-2"
           >
             <ChevronLeftIcon className="w-4 h-4" />
             <span>Kembali ke Beranda</span>
@@ -68,11 +68,34 @@ export function LoginPage() {
           <button
             type="button"
             onClick={handleSsoLogin}
-            className="w-full flex items-center justify-center space-x-3 py-4 px-6 rounded-2xl bg-teal-700 hover:bg-teal-800 text-white font-black text-sm shadow-xl hover:shadow-2xl transition-all transform active:scale-98 cursor-pointer group"
+            className="w-full min-h-[44px] flex items-center justify-center space-x-3 py-4 px-6 rounded-2xl bg-teal-700 hover:bg-teal-800 text-white font-black text-sm shadow-xl hover:shadow-2xl transition-all transform active:scale-98 cursor-pointer group focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"
           >
             <span>Masuk dengan ONE UNUSU</span>
             <ArrowRightIcon className="w-4 h-4 text-amber-400 group-hover:translate-x-1.5 transition-transform" />
           </button>
+
+          {/* Akses Cepat Demo / Pengujian Lokal Admin */}
+          <div className="pt-2">
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  const res = await fetch('/api/auth/dev-admin', { method: 'POST' });
+                  const data = await res.json();
+                  if (data.success && data.token) {
+                    localStorage.setItem('esurat_unusu_token', data.token);
+                    localStorage.setItem('esurat_unusu_user', JSON.stringify(data.user));
+                    window.location.href = '/admin';
+                  }
+                } catch (e) {
+                  console.error(e);
+                }
+              }}
+              className="w-full py-2.5 px-4 rounded-xl border border-dashed border-teal-300 bg-teal-50/60 hover:bg-teal-100/80 text-teal-800 text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <span>⚡ Masuk Cepat sebagai Admin (Uji Panel Admin)</span>
+            </button>
+          </div>
         </div>
 
         {/* Footer */}
@@ -86,6 +109,14 @@ export function LoginPage() {
         <img
           src="/assets/campus-login.png"
           alt="Gedung Kampus UNUSU Gaperta Medan"
+          width={1024}
+          height={1024}
+          loading="eager"
+          decoding="async"
+          onError={(e) => {
+            // Graceful fallback jika terjadi network issue
+            (e.currentTarget as HTMLImageElement).style.display = 'none';
+          }}
           className="absolute inset-0 w-full h-full object-cover object-center filter brightness-[0.82]"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-teal-950/95 via-teal-950/40 to-transparent pointer-events-none" />

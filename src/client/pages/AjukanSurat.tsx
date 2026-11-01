@@ -55,7 +55,8 @@ export const AjukanSurat: React.FC = () => {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
-      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-2xs space-y-6">
+        {/* Card Form */}
+        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-2xs space-y-6">
         <div>
           <span className="text-xs font-bold px-2.5 py-1 rounded bg-emerald-50 text-emerald-800">
             Formulir Online

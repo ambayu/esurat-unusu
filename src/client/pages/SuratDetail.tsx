@@ -1,37 +1,73 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { fetchSuratDetail, updateStatusSurat, createDisposisi, fetchUnitKerja, SuratItem, UnitKerjaItem } from '../services/api';
-import { ArrowLeft, CheckCircle2, Clock, ShieldCheck, QrCode, FileText, Send, UserCheck } from 'lucide-react';
+import { 
+  fetchSuratDetail, 
+  updateStatusSurat, 
+  createDisposisi, 
+  fetchUnitKerja, 
+  fetchRekomendasiNomorSurat,
+  SuratItem, 
+  UnitKerjaItem, 
+  getAssetUrl 
+} from '../services/api';
+import { 
+  ArrowLeft, 
+  CheckCircle2, 
+  Clock, 
+  ShieldCheck, 
+  QrCode, 
+  FileText, 
+  Send, 
+  UserCheck, 
+  Sparkles, 
+  AlertCircle,
+  Inbox,
+  Building2,
+  Calendar
+} from 'lucide-react';
 
 export const SuratDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [surat, setSurat] = useState<SuratItem | null>(null);
   const [units, setUnits] = useState<UnitKerjaItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingNoSurat, setLoadingNoSurat] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   // Disposisi form state
   const [keUnitId, setKeUnitId] = useState('');
   const [instruksi, setInstruksi] = useState('');
   const [catatan, setCatatan] = useState('');
+  const [deadline, setDeadline] = useState('');
 
   // Status update state
   const [newStatus, setNewStatus] = useState('');
   const [nomorSurat, setNomorSurat] = useState('');
   const [signedBy, setSignedBy] = useState('');
+  const [catatanPenolakan, setCatatanPenolakan] = useState('');
 
   const loadData = () => {
     if (!id) return;
     setLoading(true);
     Promise.all([fetchSuratDetail(Number(id)), fetchUnitKerja()])
       .then(([suratRes, unitRes]) => {
-        setSurat(suratRes.data.data);
-        setUnits(unitRes.data.data);
-        setNewStatus(suratRes.data.data.status);
-        if (unitRes.data.data.length > 0) {
+        const suratData = suratRes.data.data;
+        setSurat(suratData);
+        setUnits(unitRes.data.data || []);
+        setNewStatus(suratData.status);
+        if (suratData.nomorSurat) {
+          setNomorSurat(suratData.nomorSurat);
+        }
+        if (suratData.signedBy) {
+          setSignedBy(suratData.signedBy);
+        }
+        if (unitRes.data.data && unitRes.data.data.length > 0) {
           setKeUnitId(String(unitRes.data.data[0].id));
         }
       })
-      .catch((err) => console.error(err))
+      .catch((err) => {
+        console.error('Gagal memuat rincian naskah surat:', err);
+      })
       .finally(() => setLoading(false));
   };
 
@@ -39,41 +75,82 @@ export const SuratDetail: React.FC = () => {
     loadData();
   }, [id]);
 
+  const handleGenerateNomor = async () => {
+    if (!id) return;
+    setLoadingNoSurat(true);
+    try {
+      const res = await fetchRekomendasiNomorSurat(Number(id));
+      if (res.data?.success && res.data?.data?.nomorSurat) {
+        setNomorSurat(res.data.data.nomorSurat);
+        setStatusMessage({
+          type: 'success',
+          text: `Nomor surat otomatis berhasil di-generate sesuai pola: ${res.data.data.formatTemplate}`
+        });
+      }
+    } catch (err: any) {
+      console.error('Gagal generate nomor rekomendasi:', err);
+      setStatusMessage({
+        type: 'error',
+        text: 'Gagal men-generate nomor otomatis'
+      });
+    } finally {
+      setLoadingNoSurat(false);
+    }
+  };
+
   const handleUpdateStatus = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!id) return;
     try {
       await updateStatusSurat(Number(id), {
         status: newStatus,
-        nomorSurat: nomorSurat || undefined,
-        signedBy: signedBy || undefined,
+        nomorSurat: nomorSurat.trim() || undefined,
+        signedBy: signedBy.trim() || undefined,
+        catatanPenolakan: newStatus === 'ditolak' ? catatanPenolakan.trim() : undefined,
       });
-      alert('Status surat berhasil diperbarui!');
+      setStatusMessage({
+        type: 'success',
+        text: `Status naskah berhasil diperbarui menjadi ${newStatus.toUpperCase()}`
+      });
       loadData();
-    } catch (err) {
-      alert('Gagal memperbarui status surat');
+    } catch (err: any) {
+      setStatusMessage({
+        type: 'error',
+        text: err?.response?.data?.message || 'Gagal memperbarui status naskah surat'
+      });
     }
   };
 
   const handleCreateDisposisi = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!id || !keUnitId || !instruksi) {
-      alert('Lengkapi unit tujuan dan instruksi disposisi');
+    if (!id || !keUnitId || !instruksi.trim()) {
+      setStatusMessage({
+        type: 'error',
+        text: 'Unit penerima dan instruksi disposisi wajib diisi.'
+      });
       return;
     }
     try {
       await createDisposisi(Number(id), {
-        dariUnit: 'Rektorat / Dekan',
+        dariUnit: 'Rektorat / Biro Tata Usaha',
         keUnitId: Number(keUnitId),
-        instruksi,
-        catatan,
+        instruksi: instruksi.trim(),
+        catatan: catatan.trim() || undefined,
+        deadline: deadline || undefined,
       });
-      alert('Disposisi naskah berhasil diteruskan!');
+      setStatusMessage({
+        type: 'success',
+        text: 'Lembar disposisi pimpinan berhasil diteruskan ke unit kerja terkait!'
+      });
       setInstruksi('');
       setCatatan('');
+      setDeadline('');
       loadData();
-    } catch (err) {
-      alert('Gagal membuat disposisi');
+    } catch (err: any) {
+      setStatusMessage({
+        type: 'error',
+        text: err?.response?.data?.message || 'Gagal meneruskan disposisi'
+      });
     }
   };
 
@@ -87,10 +164,33 @@ export const SuratDetail: React.FC = () => {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
-      <Link to="/" className="inline-flex items-center text-xs font-bold text-slate-500 hover:text-emerald-700">
-        <ArrowLeft className="w-3.5 h-3.5 mr-1" />
-        <span>Kembali ke Daftar Surat</span>
-      </Link>
+      <div className="flex items-center justify-between">
+        <Link to="/admin/surat" className="inline-flex items-center text-xs font-bold text-slate-500 hover:text-emerald-700 min-h-[44px]">
+          <ArrowLeft className="w-3.5 h-3.5 mr-1" />
+          <span>Kembali ke Agenda Surat</span>
+        </Link>
+        <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-slate-100 text-slate-700">
+          ID Naskah: #{surat.id}
+        </span>
+      </div>
+
+      {/* Global Status Notification */}
+      {statusMessage && (
+        <div
+          className={`p-4 rounded-2xl flex items-center space-x-3 text-xs sm:text-sm font-semibold transition ${
+            statusMessage.type === 'success'
+              ? 'bg-emerald-50 border border-emerald-200 text-emerald-800'
+              : 'bg-rose-50 border border-rose-200 text-rose-700'
+          }`}
+        >
+          {statusMessage.type === 'success' ? (
+            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+          ) : (
+            <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" />
+          )}
+          <span>{statusMessage.text}</span>
+        </div>
+      )}
 
       {/* Main Info Card */}
       <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-2xs space-y-6">
@@ -151,6 +251,62 @@ export const SuratDetail: React.FC = () => {
             <span>Ditandatangani secara elektronik oleh: <strong>{surat.signedBy}</strong></span>
           </div>
         )}
+
+        {surat.lampiranUrl && (
+          <div className="space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-slate-50 border border-slate-200 rounded-2xl text-xs">
+              <div className="flex items-center space-x-3 text-slate-700 min-w-0">
+                <div className="w-9 h-9 rounded-xl bg-emerald-100/80 text-emerald-800 flex items-center justify-center shrink-0">
+                  <FileText className="w-5 h-5 text-emerald-700" />
+                </div>
+                <div className="min-w-0">
+                  <span className="font-bold text-slate-900 block truncate">Berkas Lampiran Dokumen</span>
+                  <span className="text-[11px] text-slate-500 font-mono block truncate">{surat.lampiranUrl}</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <a
+                  href={getAssetUrl(surat.lampiranUrl)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Unduh atau buka berkas lampiran surat"
+                  className="inline-flex items-center justify-center space-x-1.5 min-h-[44px] px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl font-bold text-xs shadow-xs transition shrink-0 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+                >
+                  <span>Unduh / Buka Berkas</span>
+                </a>
+              </div>
+            </div>
+
+            {/* In-App Preview Berkas (PDF / Image / Frame) */}
+            <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                  <FileText className="w-4 h-4 text-emerald-700" />
+                  Preview Pratinjau Berkas Dokumen
+                </span>
+                <span className="text-[10px] font-mono text-slate-400 bg-white px-2 py-0.5 rounded border border-slate-200">
+                  {surat.lampiranUrl.split('.').pop()?.toUpperCase() || 'FILE'}
+                </span>
+              </div>
+              <div className="w-full bg-white rounded-xl border border-slate-200 overflow-hidden shadow-inner flex items-center justify-center min-h-[280px]">
+                {surat.lampiranUrl.match(/\.(jpeg|jpg|gif|png|webp|svg)$/i) ? (
+                  <img
+                    src={getAssetUrl(surat.lampiranUrl)}
+                    alt="Preview Lampiran Surat"
+                    className="max-h-[500px] w-auto object-contain mx-auto"
+                    loading="lazy"
+                  />
+                ) : (
+                  <iframe
+                    src={getAssetUrl(surat.lampiranUrl)}
+                    title="Preview Berkas Lampiran PDF / Dokumen"
+                    className="w-full h-[450px] border-0"
+                  />
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Disposisi History */}
@@ -176,9 +332,9 @@ export const SuratDetail: React.FC = () => {
         {/* Form Tambah Disposisi */}
         <form onSubmit={handleCreateDisposisi} className="pt-4 border-t border-slate-100 space-y-3">
           <p className="text-xs font-bold text-slate-700">Teruskan Disposisi Baru</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
-              <label className="text-[11px] font-bold text-slate-500 block mb-1">Diteruskan Ke Unit</label>
+              <label className="text-[11px] font-bold text-slate-500 block mb-1">Diteruskan Ke Unit *</label>
               <select
                 value={keUnitId}
                 onChange={(e) => setKeUnitId(e.target.value)}
@@ -190,7 +346,16 @@ export const SuratDetail: React.FC = () => {
               </select>
             </div>
             <div>
-              <label className="text-[11px] font-bold text-slate-500 block mb-1">Instruksi Disposisi</label>
+              <label className="text-[11px] font-bold text-slate-500 block mb-1">Batas Waktu / Deadline</label>
+              <input
+                type="date"
+                value={deadline}
+                onChange={(e) => setDeadline(e.target.value)}
+                className="w-full text-xs p-2.5 rounded-xl border border-slate-200 bg-white"
+              />
+            </div>
+            <div>
+              <label className="text-[11px] font-bold text-slate-500 block mb-1">Instruksi Disposisi *</label>
               <input
                 type="text"
                 required
@@ -201,59 +366,112 @@ export const SuratDetail: React.FC = () => {
               />
             </div>
           </div>
-          <button
-            type="submit"
-            className="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded-xl"
-          >
-            Kirim Disposisi
-          </button>
+          <div>
+            <label className="text-[11px] font-bold text-slate-500 block mb-1">Catatan Tambahan Pimpinan</label>
+            <input
+              type="text"
+              value={catatan}
+              onChange={(e) => setCatatan(e.target.value)}
+              placeholder="Catatan khusus disposisi (opsional)..."
+              className="w-full text-xs p-2.5 rounded-xl border border-slate-200"
+            />
+          </div>
+          <div className="flex justify-end">
+            <button
+              type="submit"
+              className="min-h-[44px] px-5 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 transition cursor-pointer"
+            >
+              <Send className="w-3.5 h-3.5" />
+              <span>Kirim Disposisi</span>
+            </button>
+          </div>
         </form>
       </div>
 
-      {/* Admin Action: Update Status */}
+      {/* Admin Action: Update Status & Pengesahan / Approval TTE */}
       <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-2xs space-y-4">
-        <h3 className="text-lg font-bold text-slate-900">Perbarui Status Surat (Tata Usaha / Dekanat)</h3>
-        <form onSubmit={handleUpdateStatus} className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-100">
           <div>
-            <label className="text-[11px] font-bold text-slate-500 block mb-1">Status Surat</label>
-            <select
-              value={newStatus}
-              onChange={(e) => setNewStatus(e.target.value)}
-              className="w-full text-xs p-2.5 rounded-xl border border-slate-200 bg-white"
-            >
-              <option value="diajukan">Diajukan</option>
-              <option value="diproses">Diproses</option>
-              <option value="disetujui">Disetujui</option>
-              <option value="selesai">Selesai (Terbit)</option>
-              <option value="ditolak">Ditolak</option>
-            </select>
+            <h3 className="text-lg font-bold text-slate-900">Pengesahan & Pembaruan Status Surat</h3>
+            <p className="text-xs text-slate-500">Otorisasi penerbitan nomor surat resmi, pengesahan TTE, dan validasi persetujuan naskah dinas.</p>
           </div>
-          <div>
-            <label className="text-[11px] font-bold text-slate-500 block mb-1">Nomor Surat Resmi (Opsional)</label>
-            <input
-              type="text"
-              value={nomorSurat}
-              onChange={(e) => setNomorSurat(e.target.value)}
-              placeholder="Misal: 046/UNUSU/BAAK/KM/X/2026"
-              className="w-full text-xs p-2.5 rounded-xl border border-slate-200"
-            />
+          <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 self-start sm:self-auto">
+            Otoritas: Admin / Dekanat / Rektorat
+          </span>
+        </div>
+        
+        <form onSubmit={handleUpdateStatus} className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label className="text-[11px] font-bold text-slate-700 block mb-1">Status Persetujuan Naskah</label>
+              <select
+                value={newStatus}
+                onChange={(e) => setNewStatus(e.target.value)}
+                className="w-full text-xs p-2.5 rounded-xl border border-slate-200 bg-white focus:outline-emerald-600 font-semibold"
+              >
+                <option value="diajukan">Diajukan (Tahap Permohonan)</option>
+                <option value="diproses">Diproses (Sedang Ditelaah Biro)</option>
+                <option value="disetujui">Disetujui (Disahkan Pimpinan)</option>
+                <option value="selesai">Selesai (Nomor Terbit & Tervalidasi)</option>
+                <option value="ditolak">Ditolak (Perlu Revisi / Tidak Sesuai)</option>
+              </select>
+            </div>
+            
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-[11px] font-bold text-slate-700">Nomor Surat Resmi</label>
+                <button
+                  type="button"
+                  onClick={handleGenerateNomor}
+                  disabled={loadingNoSurat}
+                  className="text-[10px] text-emerald-700 hover:text-emerald-900 font-bold inline-flex items-center gap-1 cursor-pointer"
+                  title="Generate nomor otomatis berdasarkan template format jenis surat"
+                >
+                  <Sparkles className="w-3 h-3 text-amber-500" />
+                  <span>{loadingNoSurat ? 'Membuat...' : 'Auto-Generate'}</span>
+                </button>
+              </div>
+              <input
+                type="text"
+                value={nomorSurat}
+                onChange={(e) => setNomorSurat(e.target.value)}
+                placeholder="Misal: 046/UNUSU/BAAK/KM/X/2026"
+                className="w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:outline-emerald-600 font-mono"
+              />
+            </div>
+            
+            <div>
+              <label className="text-[11px] font-bold text-slate-700 block mb-1">Pejabat Penandatangan (TTE Digital)</label>
+              <input
+                type="text"
+                value={signedBy}
+                onChange={(e) => setSignedBy(e.target.value)}
+                placeholder="Misal: Prof. Dr. H. Syahrizal, M.A."
+                className="w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:outline-emerald-600"
+              />
+            </div>
           </div>
-          <div>
-            <label className="text-[11px] font-bold text-slate-500 block mb-1">Pejabat Penandatangan</label>
-            <input
-              type="text"
-              value={signedBy}
-              onChange={(e) => setSignedBy(e.target.value)}
-              placeholder="Misal: Drs. H. M. Yusuf, M.Pd."
-              className="w-full text-xs p-2.5 rounded-xl border border-slate-200"
-            />
-          </div>
-          <div className="sm:col-span-3 flex justify-end">
+
+          {newStatus === 'ditolak' && (
+            <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl">
+              <label className="text-[11px] font-bold text-rose-800 block mb-1">Alasan Penolakan / Catatan Revisi *</label>
+              <textarea
+                rows={2}
+                value={catatanPenolakan}
+                onChange={(e) => setCatatanPenolakan(e.target.value)}
+                placeholder="Tuliskan catatan alasan penolakan berkas permohonan agar dapat diperbaiki..."
+                className="w-full text-xs p-2.5 rounded-xl border border-rose-300 bg-white focus:outline-rose-500"
+              />
+            </div>
+          )}
+
+          <div className="flex justify-end pt-2">
             <button
               type="submit"
-              className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl"
+              className="min-h-[44px] px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl transition shadow-xs cursor-pointer flex items-center gap-1.5"
             >
-              Simpan Perubahan Status
+              <UserCheck className="w-4 h-4 text-emerald-400" />
+              <span>Simpan & Sahkan Perubahan Status</span>
             </button>
           </div>
         </form>
