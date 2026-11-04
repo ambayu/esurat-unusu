@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { fetchSuratList, SuratItem, PaginationInfo } from '../services/api';
+import { fetchSuratList, deleteSurat, SuratItem, PaginationInfo } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import { 
   Mail, 
   Clock, 
@@ -15,10 +16,14 @@ import {
   ChevronRight, 
   RefreshCw,
   Inbox,
-  Send
+  Send,
+  Eye,
+  Trash2,
+  ExternalLink
 } from 'lucide-react';
 
 export const SuratList: React.FC = () => {
+  const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const queryTipe = searchParams.get('tipe') || 'all';
 
@@ -29,6 +34,9 @@ export const SuratList: React.FC = () => {
   const [tipeFilter, setTipeFilter] = useState(queryTipe);
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState<PaginationInfo | null>(null);
+
+  const canDeleteSurat = user?.role === 'admin' || user?.permissions?.includes('surat:delete');
+  const canEditSurat = user?.role === 'admin' || user?.permissions?.includes('surat:edit');
 
   // Sinkronkan filter tipe bila searchParams di URL berubah (misal navigasi dari sidebar)
   useEffect(() => {
@@ -84,6 +92,16 @@ export const SuratList: React.FC = () => {
       setSearchParams(searchParams);
     } else {
       setSearchParams({ ...Object.fromEntries(searchParams.entries()), tipe: val });
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!window.confirm('Yakin ingin menghapus arsip surat ini beserta seluruh disposisi terkait?')) return;
+    try {
+      await deleteSurat(id);
+      loadData(page, statusFilter, search, tipeFilter);
+    } catch (err: any) {
+      alert(err?.response?.data?.message || 'Gagal menghapus surat');
     }
   };
 
@@ -217,80 +235,125 @@ export const SuratList: React.FC = () => {
         </div>
       </form>
 
-      {/* Surat Items List */}
+      {/* Data Table View */}
       {loading ? (
         <div className="p-16 text-center text-slate-400 flex items-center justify-center gap-2">
           <RefreshCw className="w-4 h-4 animate-spin text-emerald-600" />
           <span>Memuat data persuratan...</span>
         </div>
       ) : (
-        <div className="space-y-4">
-          {suratList.length === 0 ? (
-            <div className="p-12 text-center text-slate-400 bg-white rounded-2xl border border-slate-200">
-              Tidak ada data persuratan yang cocok.
-            </div>
-          ) : (
-            suratList.map((item) => (
-              <div
-                key={item.id}
-                className="bg-white rounded-2xl p-6 border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-emerald-300 transition-all flex flex-col md:flex-row justify-between items-start md:items-center gap-4"
-              >
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <span className="font-mono text-xs font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
-                      {item.nomorAgenda}
-                    </span>
-                    <span className={`text-xs font-bold px-2 py-0.5 rounded ${
-                      item.tipeSurat === 'masuk' ? 'bg-blue-50 text-blue-800' : 'bg-emerald-50 text-emerald-800'
-                    }`}>
-                      {item.tipeSurat === 'masuk' ? 'Masuk' : 'Keluar'}
-                    </span>
-                    <span className="text-xs font-medium text-slate-600 bg-slate-100 px-2 py-0.5 rounded">
-                      {item.jenisSurat?.nama || 'Surat'}
-                    </span>
-                    {getStatusBadge(item.status)}
-                  </div>
-
-                  <h3 className="text-base font-bold text-slate-900 leading-snug">
-                    {item.perihal}
-                  </h3>
-
-                  <div className="text-xs text-slate-500 flex flex-wrap gap-x-4 gap-y-1">
-                    <span>Pemohon: <strong className="text-slate-700">{item.pemohonNama}</strong> ({item.pemohonId || '-'})</span>
-                    <span>Prodi: <strong className="text-slate-700">{item.pemohonProdi || '-'}</strong></span>
-                    <span>Tanggal: {new Date(item.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
-                  </div>
-
-                  {item.nomorSurat && (
-                    <div className="text-xs font-semibold text-emerald-700">
-                      Nomor Surat Resmi: <span className="font-mono">{item.nomorSurat}</span>
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <Link
-                    to={`/admin/surat/${item.id}`}
-                    className="inline-flex items-center px-4 py-2 rounded-xl bg-slate-100 hover:bg-emerald-50 text-slate-700 hover:text-emerald-800 text-xs font-bold transition"
-                  >
-                    <span>Detail & Disposisi</span>
-                    <ArrowRight className="w-3.5 h-3.5 ml-1" />
-                  </Link>
-                  <Link
-                    to={`/verifikasi/${item.qrCodeToken}`}
-                    className="p-2 rounded-xl text-slate-400 hover:text-emerald-700 hover:bg-emerald-50 transition"
-                    title="Periksa TTE & QR Code"
-                  >
-                    <FileText className="w-4 h-4" />
-                  </Link>
-                </div>
-              </div>
-            ))
-          )}
+        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-2xs">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="border-b border-[#CBD5E1] bg-slate-50 text-slate-700 font-bold">
+                  <th className="py-3.5 px-4">Agenda / Nomor Surat</th>
+                  <th className="py-3.5 px-4">Tipe & Jenis</th>
+                  <th className="py-3.5 px-4">Perihal / Keperluan</th>
+                  <th className="py-3.5 px-4">Pemohon</th>
+                  <th className="py-3.5 px-4">Tanggal</th>
+                  <th className="py-3.5 px-4 text-center">Status</th>
+                  <th className="py-3.5 px-4 text-right">Aksi</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {suratList.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="py-12 text-center text-slate-400">
+                      Tidak ada data persuratan yang cocok dengan filter atau kata kunci.
+                    </td>
+                  </tr>
+                ) : (
+                  suratList.map((item) => (
+                    <tr key={item.id} className="hover:bg-slate-50/80 transition">
+                      <td className="py-3.5 px-4">
+                        <div className="font-mono font-bold text-slate-800 text-xs">
+                          {item.nomorAgenda}
+                        </div>
+                        {item.nomorSurat ? (
+                          <div className="text-[11px] font-mono text-emerald-700 mt-0.5">
+                            {item.nomorSurat}
+                          </div>
+                        ) : (
+                          <div className="text-[10px] text-slate-400 italic">Belum bernomor resmi</div>
+                        )}
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded uppercase mb-1 ${
+                          item.tipeSurat === 'masuk' ? 'bg-blue-50 text-blue-700' : 'bg-emerald-50 text-emerald-700'
+                        }`}>
+                          {item.tipeSurat === 'masuk' ? 'Surat Masuk' : 'Surat Keluar'}
+                        </span>
+                        <div className="text-slate-600 font-medium truncate max-w-[140px]" title={item.jenisSurat?.nama}>
+                          {item.jenisSurat?.nama || 'Surat'}
+                        </div>
+                      </td>
+                      <td className="py-3.5 px-4 max-w-xs">
+                        <div className="font-bold text-slate-900 line-clamp-1" title={item.perihal}>
+                          {item.perihal}
+                        </div>
+                        {item.keperluan && (
+                          <div className="text-[11px] text-slate-500 line-clamp-1 mt-0.5" title={item.keperluan}>
+                            {item.keperluan}
+                          </div>
+                        )}
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <div className="font-bold text-slate-800">{item.pemohonNama}</div>
+                        <div className="text-[11px] text-slate-400">
+                          {item.pemohonProdi ? `${item.pemohonProdi}` : item.pemohonId || '-'}
+                        </div>
+                      </td>
+                      <td className="py-3.5 px-4 text-slate-500 whitespace-nowrap">
+                        {new Date(item.createdAt).toLocaleDateString('id-ID', {
+                          day: 'numeric',
+                          month: 'short',
+                          year: 'numeric'
+                        })}
+                      </td>
+                      <td className="py-3.5 px-4 text-center whitespace-nowrap">
+                        {getStatusBadge(item.status)}
+                      </td>
+                      <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                        <div className="inline-flex items-center gap-1.5">
+                          <Link
+                            to={`/admin/surat/${item.id}`}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-[#CBD5E1] bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs transition"
+                            title="Detail & Disposisi"
+                          >
+                            <Eye className="w-3.5 h-3.5 text-emerald-700" />
+                            <span>Detail</span>
+                          </Link>
+                          <Link
+                            to={`/verifikasi/${item.qrCodeToken}`}
+                            target="_blank"
+                            className="p-1.5 rounded-lg border border-[#CBD5E1] bg-white hover:bg-slate-50 text-slate-500 hover:text-emerald-700 transition"
+                            title="TTE & Verifikasi QR"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                          </Link>
+                          {canDeleteSurat && (
+                            <button
+                              type="button"
+                              onClick={() => handleDelete(item.id)}
+                              className="p-1.5 rounded-lg border border-[#CBD5E1] bg-white hover:bg-rose-50 text-slate-500 hover:text-rose-700 transition"
+                              title="Hapus Surat"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
 
           {/* Pagination Controls */}
           {pagination && pagination.totalPages > 1 && (
-            <div className="flex items-center justify-between pt-4 pb-2 text-xs text-slate-600">
+            <div className="flex items-center justify-between p-4 border-t border-slate-200 text-xs text-slate-600 bg-slate-50/50">
               <div>
                 Menampilkan halaman <strong className="font-bold text-slate-900">{pagination.page}</strong> dari{' '}
                 <strong className="font-bold text-slate-900">{pagination.totalPages}</strong> (Total {pagination.total} surat)

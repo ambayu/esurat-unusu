@@ -7,6 +7,7 @@ import {
   FileText, 
   Layers, 
   ShieldCheck, 
+  Users,
   LogOut, 
   User, 
   Menu, 
@@ -67,6 +68,13 @@ export const AdminLayout: React.FC = () => {
       icon: ShieldCheck,
       description: 'Validasi token keaslian surat',
     },
+    {
+      to: '/admin/rbac',
+      label: 'Manajemen Pengguna & RBAC',
+      icon: Users,
+      description: 'Pengguna, Peran & Matriks Izin',
+      permission: 'rbac:menu',
+    },
   ];
 
   const handleLogout = () => {
@@ -78,6 +86,7 @@ export const AdminLayout: React.FC = () => {
     if (pathname === '/admin' || pathname === '/admin/dashboard') return 'Dashboard';
     if (pathname === '/admin/jenis-surat') return 'Jenis Surat & Template';
     if (pathname.startsWith('/admin/surat-form')) return 'Form Registrasi Surat';
+    if (pathname.startsWith('/admin/rbac')) return 'Manajemen Pengguna & RBAC';
     if (pathname.startsWith('/admin/surat') || pathname.startsWith('/surat')) return 'Agenda Persuratan';
     if (pathname.startsWith('/verifikasi')) return 'Verifikasi Dokumen QR';
     return 'Panel Tata Usaha & Biro';
@@ -169,7 +178,11 @@ export const AdminLayout: React.FC = () => {
               </p>
             )}
             <nav className="space-y-1" role="navigation" aria-label="Menu utama panel persuratan">
-              {navItems.map((item) => {
+              {navItems.filter((item) => {
+                if (!item.permission) return true;
+                if (user?.role === 'admin') return true;
+                return user?.permissions?.includes(item.permission);
+              }).map((item) => {
                 const Icon = item.icon;
                 const active = isItemActive(item.to, item.end);
                 return (

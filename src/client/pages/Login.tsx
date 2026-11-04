@@ -1,13 +1,24 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRightIcon, ChevronLeftIcon } from '@heroicons/react/24/outline';
+import { ArrowRightIcon, ChevronLeftIcon, ShieldCheckIcon } from '@heroicons/react/24/outline';
 import { AnimatedFlatSsoLogo } from '../components/AnimatedFlatSsoLogo';
 
 const ONE_UNUSU_URL = import.meta.env.VITE_ONE_UNUSU_URL || 'http://localhost:5173';
 const SSO_CLIENT_ID = import.meta.env.VITE_SSO_CLIENT_ID || 'esurat-unusu';
 
+/**
+ * Halaman masuk E-Surat UNUSU.
+ *
+ * Satu-satunya jalur otentikasi adalah SSO terpusat ONE UNUSU. Tidak tersedia
+ * formulir kata sandi lokal maupun pintasan "Masuk Cepat sebagai Admin" agar
+ * setiap sesi persuratan selalu berasal dari tiket SSO sekali pakai.
+ */
 export function LoginPage() {
+  const [redirecting, setRedirecting] = useState(false);
+
   const handleSsoLogin = () => {
+    if (redirecting) return;
+    setRedirecting(true);
     const target = `${ONE_UNUSU_URL}/authorize?client_id=${encodeURIComponent(SSO_CLIENT_ID)}`;
     window.location.href = target;
   };
@@ -20,7 +31,7 @@ export function LoginPage() {
         <div>
           <Link
             to="/"
-            className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-500 hover:text-teal-900 transition-colors min-h-[44px] py-2 focus:outline-none focus:ring-2 focus:ring-teal-500 rounded-lg px-2 -ml-2"
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#64748B] hover:text-[#166534] transition-colors min-h-[44px] py-2 focus:outline-none focus:ring-2 focus:ring-[#166534] rounded-lg px-2 -ml-2"
           >
             <ChevronLeftIcon className="w-4 h-4" />
             <span>Kembali ke Beranda</span>
@@ -31,15 +42,15 @@ export function LoginPage() {
         <div className="max-w-md w-full mx-auto my-auto py-6 space-y-7 text-center sm:text-left">
           {/* Header */}
           <div className="space-y-2">
-            <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-teal-50 text-teal-900 border border-teal-200">
-              <span className="w-2 h-2 rounded-full bg-teal-600 animate-pulse" />
-              <span>Persuratan & Disposisi Digital</span>
+            <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-[#F0FDF4] text-[#166534] border border-[#BBF7D0]">
+              <span className="w-2 h-2 rounded-full bg-[#22C55E]" />
+              <span>Persuratan &amp; Disposisi Digital</span>
             </div>
 
-            <h1 className="text-3xl sm:text-4xl font-black text-slate-950 tracking-tight">
-              Masuk ke <span className="text-teal-700">E-Surat UNUSU</span>
+            <h1 className="text-3xl sm:text-4xl font-black text-[#1E293B] tracking-tight">
+              Masuk ke <span className="text-[#166534]">E-Surat UNUSU</span>
             </h1>
-            <p className="text-xs sm:text-sm text-slate-500 leading-relaxed font-normal">
+            <p className="text-xs sm:text-sm text-[#64748B] leading-relaxed font-normal">
               Kelola surat masuk, surat keluar, disposisi, dan arsip digital melalui gerbang SSO terpadu.
             </p>
           </div>
@@ -52,49 +63,36 @@ export function LoginPage() {
             />
             <div className="text-center space-y-1">
               <div className="flex items-center justify-center space-x-1.5">
-                <span className="font-black text-xl text-slate-950 tracking-tight">ONE</span>
-                <span className="font-black text-xl text-emerald-800 tracking-tight">UNUSU</span>
+                <span className="font-black text-xl text-[#1E293B] tracking-tight">ONE</span>
+                <span className="font-black text-xl text-[#166534] tracking-tight">UNUSU</span>
               </div>
-              <p className="text-[11px] text-slate-500 font-semibold">
+              <p className="text-[11px] text-[#64748B] font-semibold">
                 Ekosistem Digital Terpadu Kampus
               </p>
-              <p className="text-[10px] text-slate-400 font-medium">
+              <p className="text-[10px] text-[#94A3B8] font-medium">
                 Universitas Nahdlatul Ulama Sumatera Utara
               </p>
             </div>
           </div>
 
-          {/* Tombol Masuk */}
-          <button
-            type="button"
-            onClick={handleSsoLogin}
-            className="w-full min-h-[44px] flex items-center justify-center space-x-3 py-4 px-6 rounded-2xl bg-teal-700 hover:bg-teal-800 text-white font-black text-sm shadow-xl hover:shadow-2xl transition-all transform active:scale-98 cursor-pointer group focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"
-          >
-            <span>Masuk dengan ONE UNUSU</span>
-            <ArrowRightIcon className="w-4 h-4 text-amber-400 group-hover:translate-x-1.5 transition-transform" />
-          </button>
-
-          {/* Akses Cepat Demo / Pengujian Lokal Admin */}
-          <div className="pt-2">
+          {/* Tombol Masuk SSO — gaya identik dengan tombol masuk pada halaman login ONE UNUSU */}
+          <div className="space-y-3">
             <button
               type="button"
-              onClick={async () => {
-                try {
-                  const res = await fetch('/api/auth/dev-admin', { method: 'POST' });
-                  const data = await res.json();
-                  if (data.success && data.token) {
-                    localStorage.setItem('esurat_unusu_token', data.token);
-                    localStorage.setItem('esurat_unusu_user', JSON.stringify(data.user));
-                    window.location.href = '/admin';
-                  }
-                } catch (e) {
-                  console.error(e);
-                }
-              }}
-              className="w-full py-2.5 px-4 rounded-xl border border-dashed border-teal-300 bg-teal-50/60 hover:bg-teal-100/80 text-teal-800 text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer"
+              onClick={handleSsoLogin}
+              disabled={redirecting}
+              data-testid="login-sso-button"
+              aria-label="Masuk dengan Akun SSO ONE UNUSU"
+              className="w-full min-h-[48px] py-3.5 px-4 bg-[#166534] hover:bg-[#14532D] active:bg-[#14532D] text-white font-semibold text-sm rounded-[8px] shadow-xs transition duration-150 disabled:opacity-50 flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-[#166534] focus:ring-offset-2"
             >
-              <span>⚡ Masuk Cepat sebagai Admin (Uji Panel Admin)</span>
+              <span>{redirecting ? 'Menghubungkan ke ONE UNUSU...' : 'Masuk dengan Akun SSO ONE UNUSU'}</span>
+              {!redirecting && <ArrowRightIcon className="w-4 h-4" />}
             </button>
+
+            <div className="flex items-start justify-center sm:justify-start gap-1.5 text-[11px] text-[#64748B] font-medium leading-relaxed">
+              <ShieldCheckIcon className="w-3.5 h-3.5 text-[#166534] shrink-0 mt-0.5" />
+              <span>Satu akun kampus untuk seluruh layanan. Tiket SSO berlaku 5 menit dan hanya dapat dipakai sekali.</span>
+            </div>
           </div>
         </div>
 

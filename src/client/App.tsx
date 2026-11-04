@@ -11,6 +11,7 @@ import { AdminLayout } from './components/AdminLayout';
 import { AdminDashboard } from './pages/AdminDashboard';
 import { JenisSuratManagement } from './pages/JenisSuratManagement';
 import { AdminSuratForm } from './pages/AdminSuratForm';
+import { RbacManagement } from './pages/RbacManagement';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
 interface ProtectedRouteProps {
@@ -76,6 +77,7 @@ function AppContent() {
             <Route path="surat/:id" element={<SuratDetail />} />
             <Route path="jenis-surat" element={<JenisSuratManagement />} />
             <Route path="surat-form" element={<AdminSuratForm />} />
+            <Route path="rbac" element={<RbacManagement />} />
           </Route>
 
           {/* Shortcut dashboard diarahkan ke /admin jika admin/staff atau /surat */}

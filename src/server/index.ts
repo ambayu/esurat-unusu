@@ -209,27 +209,21 @@ app.post("/api/auth/sso", async (req: Request, res: Response) => {
   }
 });
 
-// Endpoint bypass pengujian lokal / demo admin
-app.post("/api/auth/dev-admin", async (_req: Request, res: Response) => {
-  try {
-    const adminUser: SsoSession = {
-      id: 1,
-      username: "admin_biro",
-      nama: "Admin Biro Rektorat UNUSU",
-      email: "admin.esurat@unusu.ac.id",
-      role: "admin",
-      ssoRole: "SUPERADMIN",
-      nim: null,
-      nidn: null,
-      prodi: null,
-      fakultas: null,
-    };
-    const token = jwt.sign(adminUser, JWT_SECRET, { expiresIn: "7d" });
-    const userPermissions = await getUserPermissionKeys(adminUser.id, adminUser.role);
-    res.json({ success: true, token, user: { ...adminUser, permissions: userPermissions } });
-  } catch (error: any) {
-    res.status(500).json({ success: false, message: "Gagal dev login: " + error?.message });
-  }
+// Endpoint bypass pengujian lokal / demo admin (dinonaktifkan - login via SSO ONE UNUSU terpusat)
+// app.post("/api/auth/dev-admin", async (_req: Request, res: Response) => { ... });
+
+/**
+ * Penjaga jalur masuk tunggal (SSO-only).
+ *
+ * E-Surat UNUSU tidak lagi menyediakan formulir kata sandi lokal maupun
+ * pintasan "Masuk Cepat sebagai Admin". Permintaan ke endpoint login lama
+ * dijawab tegas 410 Gone agar tidak ada jalur sesi yang lahir tanpa tiket SSO.
+ */
+const SSO_ONLY_MESSAGE =
+  "Login lokal dinonaktifkan. Silakan masuk melalui SSO ONE UNUSU di /authorize?client_id=" + SSO_CLIENT_ID;
+
+app.all(["/api/auth/login", "/api/auth/dev-admin", "/api/auth/admin-login", "/api/auth/quick-login"], (_req: Request, res: Response) => {
+  res.status(410).json({ success: false, code: "SSO_ONLY", message: SSO_ONLY_MESSAGE });
 });
 
 // Seluruh API di bawah ini wajib membawa JWT sesi lokal (hasil SSO).
