@@ -342,7 +342,7 @@ export const LandingPage: React.FC = () => {
         <LatarDekoratif ragam="titik" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid items-center gap-10 lg:grid-cols-12 lg:gap-14">
           {/* Kiri: narasi */}
-          <Reveal className="lg:col-span-6 space-y-5">
+          <Reveal animasiAwal={false} className="lg:col-span-6 space-y-5">
             <p className="border-l-2 border-surat-green pl-3 text-xs font-bold text-surat-green uppercase tracking-[0.14em]">
               Tentang Platform
             </p>

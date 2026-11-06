@@ -56,7 +56,7 @@ assert(
 );
 
 assert(
-  appContent.includes("{!isAdminRoute && (") && appContent.includes("<footer"),
+  appContent.includes("{!isAdminRoute && <Footer />}") && appContent.includes("import { Footer }"),
   "App.tsx menyembunyikan footer publik di rute admin untuk layout dashboard yang bersih"
 );
 

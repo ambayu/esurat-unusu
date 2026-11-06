@@ -1,21 +1,20 @@
 import React from 'react';
 
 /**
- * useReveal: animasi masuk saat elemen memasuki viewport.
+ * useReveal: animasi masuk per seksi saat halaman digulir.
  *
- * Prinsip:
- * 1. Animasi hanya menyatakan kedatangan konten, bukan menghibur. Elemen
- *    muncul dengan geseran kecil (20px) dan fade, sekali saja, lalu diam.
- *    Animasi yang berulang setiap scroll membuat halaman terasa gelisah.
- * 2. `prefers-reduced-motion: reduce` mematikan animasi sepenuhnya dan
- *    langsung menampilkan elemen dalam keadaan akhir.
- * 3. Tanpa JavaScript / tanpa IntersectionObserver, elemen tetap terlihat.
+ * Cara kerja:
+ * 1. Elemen mulai dalam keadaan tersembunyi (opasitas 0, geser 24px ke bawah).
+ * 2. Saat seksi memasuki viewport, elemen bergeser naik dan memudar masuk
+ *    sekali saja, lalu diam.
+ * 3. Seksi di layar pertama TIDAK dianimasikan saat halaman dibuka. Hanya
+ *    seksi yang benar-benar dicapai lewat scroll yang beranimasi, sesuai
+ *    permintaan "baru jalan kalau di-scroll".
+ * 4. `prefers-reduced-motion: reduce` mematikan animasi dan langsung
+ *    menampilkan elemen dalam keadaan akhir.
+ * 5. Tanpa `IntersectionObserver`, elemen langsung tampil.
  *
- * Kenapa memakai satu observer bersama:
- * Landing page punya belasan elemen beranimasi. Satu IntersectionObserver per
- * elemen berarti belasan observer aktif sekaligus dengan callback yang tidak
- * sinkron. Semua `Reveal` di halaman berbagi satu observer lewat
- * `observerBersama()` sehingga biayanya konstan.
+ * Satu observer dipakai bersama seluruh elemen halaman agar biayanya konstan.
  */
 
 type Callback = () => void;
@@ -38,11 +37,11 @@ function observerBersama(): IntersectionObserver | null {
         });
       },
       {
-        // Picu sedikit sebelum elemen menyentuh tepi bawah layar, supaya
-        // animasi selesai saat elemen terbaca, bukan sesudahnya.
+        // Picu 80px sebelum elemen menyentuh tepi bawah layar, supaya animasi
+        // sudah selesai saat seksi benar-benar terbaca mata.
         rootMargin: '0px 0px -80px 0px',
         // 0 berarti cukup 1 piksel terlihat. Elemen setinggi viewport tetap
-        // bisa memicu, berbeda dengan threshold persentase.
+        // memicu, berbeda dengan threshold persentase.
         threshold: 0,
       },
     );
@@ -52,15 +51,21 @@ function observerBersama(): IntersectionObserver | null {
 }
 
 /**
- * @param opsi.delay Jeda tambahan dalam milidetik. Untuk efek berurutan dalam
- *                   satu grup kartu, isi dengan indeks dikali 70.
+ * @param opsi.delay        Jeda tambahan dalam milidetik. Untuk efek berurutan
+ *                          dalam satu grid, isi dengan indeks dikali 90.
+ * @param opsi.animasiAwal  Bila `false`, elemen ditampilkan tanpa animasi saat
+ *                          halaman pertama dibuka. Dipakai untuk seksi yang
+ *                          berdampingan dengan hero, karena seksi itu sudah
+ *                          terbaca sebelum pengguna sempat menggulir.
  */
 export function useReveal<T extends HTMLElement = HTMLDivElement>(options?: {
   delay?: number;
+  animasiAwal?: boolean;
 }) {
   const ref = React.useRef<T | null>(null);
   const [terlihat, setTerlihat] = React.useState(false);
   const delay = options?.delay ?? 0;
+  const animasiAwal = options?.animasiAwal ?? true;
 
   React.useEffect(() => {
     const node = ref.current;
@@ -75,20 +80,36 @@ export function useReveal<T extends HTMLElement = HTMLDivElement>(options?: {
       return;
     }
 
+    // Seksi yang berdampingan dengan hero tampil apa adanya, tanpa menunggu
+    // scroll. Ini dicek tanpa melihat posisi elemen: seksi Tentang bisa berada
+    // tepat di bawah batas layar (top lebih besar dari tinggi viewport) namun
+    // tetap terlihat begitu pengguna menggulir sedikit. Menampilkannya langsung
+    // mencegah seksi kosong melompong pada saat halaman baru dibuka.
+    if (!animasiAwal) {
+      setTerlihat(true);
+      return;
+    }
+
     petaCallback.set(node, () => setTerlihat(true));
-    observer.observe(node);
+
+    // Tunggu satu frame sebelum mengamati. Tanpa ini, elemen yang sudah berada
+    // di dalam viewport saat mount akan langsung dianggap terlihat pada frame
+    // pertama dan transisinya habis sebelum sempat dilukis browser.
+    const raf = requestAnimationFrame(() => observer.observe(node));
 
     return () => {
+      cancelAnimationFrame(raf);
       petaCallback.delete(node);
       observer.unobserve(node);
     };
-  }, []);
+  }, [animasiAwal]);
 
   const style: React.CSSProperties = {
     opacity: terlihat ? 1 : 0,
-    transform: terlihat ? 'none' : 'translateY(20px)',
-    transition: `opacity 600ms cubic-bezier(0.16, 1, 0.3, 1) ${delay}ms, transform 600ms cubic-bezier(0.16, 1, 0.3, 1) ${delay}ms`,
-    // Cegah bayangan/teks terpotong saat elemen masih bergeser.
+    transform: terlihat ? 'none' : 'translateY(24px)',
+    transition: `opacity 700ms cubic-bezier(0.16, 1, 0.3, 1) ${delay}ms, transform 700ms cubic-bezier(0.16, 1, 0.3, 1) ${delay}ms`,
+    // Dibuat kondisional supaya compositor tidak menahan lapisan terus-menerus
+    // setelah animasi selesai.
     willChange: terlihat ? 'auto' : 'opacity, transform',
   };
 

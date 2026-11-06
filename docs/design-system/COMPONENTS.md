@@ -108,13 +108,15 @@ Dokumen ini mencatat seluruh komponen bersama yang wajib digunakan ulang di selu
 - **Aksesibilitas**: selalu `aria-hidden` dan `pointer-events-none`. Seksi induk wajib memakai `isolate overflow-hidden` agar bentuk tidak meluber.
 
 ### `Reveal` (`src/client/components/Reveal.tsx`) + `useReveal` (`src/client/hooks/useReveal.ts`)
-- **Tanggung Jawab**: Memunculkan elemen saat memasuki viewport (geser 20px + fade 600ms).
-- **Props `Reveal`**: `delay?` (ms), `className?`, `as?` (`div` | `li` | `section` | `article`).
+- **Tanggung Jawab**: Memunculkan elemen saat seksi memasuki viewport lewat scroll (geser 24px ke atas + fade 700ms).
+- **Props `Reveal`**: `delay?` (ms), `animasiAwal?` (default `true`), `className?`, `as?` (`div` | `li` | `section` | `article`).
 - **Aturan Animasi**:
   - Animasi **sekali jalan**, tidak berulang saat scroll balik. Animasi yang berulang membuat halaman terasa gelisah.
-  - Untuk efek berurutan dalam satu grid, isi `delay` dengan indeks dikali 70 sampai 120ms.
+  - Untuk efek berurutan dalam satu grid, isi `delay` dengan indeks dikali 80 sampai 90ms.
   - Semua elemen berbagi **satu** `IntersectionObserver` (`observerBersama()` + `WeakMap`), jadi biayanya konstan berapa pun jumlah elemen.
-  - `threshold: 0` + `rootMargin: 0px 0px -80px 0px`: elemen setinggi viewport tetap memicu, dan animasi selesai sebelum elemen menyentuh tepi layar.
+  - `threshold: 0` + `rootMargin: 0px 0px -80px 0px`: seksi setinggi viewport tetap memicu, dan animasi selesai sebelum seksi menyentuh tepi layar.
+  - Pengamatan ditunda satu `requestAnimationFrame` supaya transisi sempat berjalan dari keadaan tersembunyi. Tanpa jeda itu, elemen yang sudah di layar langsung dianggap terlihat dan animasinya habis sebelum dilukis.
+  - **`animasiAwal={false}`** untuk seksi yang berdampingan dengan hero. Seksi itu tampil apa adanya tanpa menunggu scroll, karena sudah terbaca sebelum pengguna sempat menggulir. Jangan menambahkan pengecekan posisi di sini: seksi Tentang berada tepat di bawah batas layar sehingga pengecekan `getBoundingClientRect().top < innerHeight` gagal dan seksinya tertinggal kosong.
   - Mati total pada `prefers-reduced-motion: reduce` dan tetap menampilkan konten bila `IntersectionObserver` tidak tersedia.
 
 ---
