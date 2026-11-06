@@ -4,12 +4,10 @@ import { Link } from 'react-router-dom';
 import { fetchAdminStats, AdminStatsData, SuratItem, DisposisiItem } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { CardContainer } from '../components/CardContainer';
-import { AdminPanelTemplate } from '../components/AdminPanelTemplate';
 import { EmptyState } from '../components/EmptyState';
 import { ErrorState } from '../components/ErrorState';
 import { ReportCard, DonutChart, BarChart, StackedBar, GaugeRing } from '../components/LaporanCharts';
 import {
-  ArrowPathIcon,
   ArrowRightIcon,
   ArrowTrendingUpIcon,
   CheckCircleIcon,
@@ -17,7 +15,6 @@ import {
   ClockIcon,
   DocumentTextIcon,
   ExclamationCircleIcon,
-  FunnelIcon,
   InboxIcon,
   PaperAirplaneIcon,
   PlusIcon,
@@ -125,45 +122,6 @@ export const AdminDashboard: React.FC = () => {
           </div>
         </div>
       </section>
-
-      {/* Top Welcome Panel Standar LPPM */}
-      <AdminPanelTemplate
-        badge={
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-surat-green-100 text-surat-green-dark uppercase tracking-wider">
-            Panel Tata Usaha &amp; Biro
-          </span>
-        }
-        title="Ringkasan Persuratan Digital"
-        description="Pantau arus lalu lintas surat masuk, surat keluar, antrean permohonan, serta disposisi pimpinan UNUSU secara real-time."
-        actions={
-          <div className="flex flex-wrap items-center gap-2.5">
-            <button
-              type="button"
-              onClick={loadData}
-              disabled={loading}
-              aria-label="Segarkan data statistik persuratan"
-              className="inline-flex items-center px-3.5 py-2.5 rounded-[12px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition min-h-[44px] min-w-[44px] focus:outline-none focus:ring-2 focus:ring-surat-green-light cursor-pointer"
-              title="Muat ulang data"
-            >
-              <ArrowPathIcon className={`w-3.5 h-3.5 mr-1.5 ${loading ? 'animate-spin' : ''}`} />
-              <span>Segarkan</span>
-            </button>
-            <Link
-              to="/admin/surat"
-              aria-label="Kelola agenda surat"
-              className="inline-flex items-center px-4 py-2.5 rounded-[12px] bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition min-h-[44px] focus:outline-none focus:ring-2 focus:ring-slate-500"
-            >
-              <DocumentTextIcon className="w-3.5 h-3.5 mr-1.5" />
-              <span>Agenda Surat</span>
-            </Link>
-          </div>
-        }
-      >
-        <p className="text-xs text-slate-600 leading-relaxed">
-          Angka di bawah dihitung langsung dari basis data persuratan. Bila status belum bergerak,
-          gunakan tombol Segarkan untuk mengambil kondisi terbaru.
-        </p>
-      </AdminPanelTemplate>
 
       {/* Error State with Retry Button */}
       {error && (

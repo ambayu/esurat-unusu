@@ -5,7 +5,8 @@ interface AdminPanelTemplateProps {
   description: string;
   badge?: React.ReactNode;
   actions?: React.ReactNode;
-  children: React.ReactNode;
+  /** Opsional: bila tidak diisi, hanya header panel yang dirender. */
+  children?: React.ReactNode;
   className?: string;
 }
 
@@ -38,8 +39,11 @@ export const AdminPanelTemplate: React.FC<AdminPanelTemplateProps> = ({
         {actions && <div className="flex items-center gap-2.5 flex-shrink-0">{actions}</div>}
       </div>
 
-      {/* Panel Content Canvas */}
-      <div className="w-full min-w-0 p-5 sm:p-6 space-y-6">{children}</div>
+      {/* Panel Content Canvas — hanya dirender bila ada isi, supaya panel
+          bisa dipakai sebagai header ringkas tanpa baris keterangan tambahan. */}
+      {children ? (
+        <div className="w-full min-w-0 p-5 sm:p-6 space-y-6">{children}</div>
+      ) : null}
     </div>
   );
 };
