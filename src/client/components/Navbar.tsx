@@ -38,6 +38,17 @@ export const Navbar: React.FC = () => {
     return null;
   }
 
+  /**
+   * True hanya untuk Super Administrator ONE UNUSU.
+   * Spasi & garis bawah dibuang agar `SUPERADMIN`, `SUPER_ADMIN`,
+   * `Super Admin`, dan `super admin` semuanya dikenali.
+   */
+  const isSuperAdministrator = (() => {
+    if (!user) return false;
+    const peran = (user.ssoRole || user.role || '').toUpperCase().replace(/[\s_]/g, '');
+    return peran === 'SUPERADMIN';
+  })();
+
   const links: NavLinkItem[] = [
     { to: '/', label: 'Beranda', icon: HomeIcon, match: (p) => p === '/' },
     {
@@ -87,31 +98,62 @@ export const Navbar: React.FC = () => {
           <div className="flex items-center gap-2">
             {user ? (
               <>
-                {/* Identitas pengguna : chip non-klik (bukan tombol panel).
-                 *  Navbar publik tidak pernah menautkan panel admin; tombol
-                 *  "Panel Admin" sudah dihapus dari menu & aksi. */}
-                <div className="group hidden lg:inline-flex items-center gap-2 h-[44px] px-3 text-white/90">
-                  {user.foto && !imgError ? (
-                    <img
-                      src={getAssetUrl(user.foto)}
-                      alt={user.nama}
-                      width={32}
-                      height={32}
-                      loading="lazy"
-                      decoding="async"
-                      onError={() => setImgError(true)}
-                      className="w-8 h-8 rounded-full object-cover border border-white/30 shrink-0"
-                    />
-                  ) : (
-                    <div className="w-8 h-8 rounded-full bg-white/15 text-white flex items-center justify-center font-bold text-xs uppercase shrink-0">
-                      {user.nama?.charAt(0) || <UserIcon className="w-4 h-4" aria-hidden="true" />}
+                {/* Identitas pengguna : chip tanpa border.
+                 *  - Super Administrator ONE UNUSU: chip BISA diklik ke panel.
+                 *  - Peran lain: chip non-klik, tidak pernah masuk panel.
+                 *  Tombol "Panel Admin" tetap tidak ada di menu. */}
+                {isSuperAdministrator ? (
+                  <Link
+                    to="/admin"
+                    aria-label="Buka panel admin E-Surat"
+                    title="Buka panel admin E-Surat"
+                    className="group hidden lg:inline-flex items-center gap-2 h-[44px] px-3 text-white/90 transition-all hover:text-white hover:shadow-[inset_2px_0_0_0_rgba(255,255,255,0.3),inset_-2px_0_0_0_rgba(255,255,255,0.3)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-surat-gold focus-visible:ring-offset-2 focus-visible:ring-offset-surat-green"
+                  >
+                    {user.foto && !imgError ? (
+                      <img
+                        src={getAssetUrl(user.foto)}
+                        alt={user.nama}
+                        width={32}
+                        height={32}
+                        loading="lazy"
+                        decoding="async"
+                        onError={() => setImgError(true)}
+                        className="w-8 h-8 rounded-full object-cover border border-white/30 shrink-0"
+                      />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-white/15 text-white flex items-center justify-center font-bold text-xs uppercase shrink-0">
+                        {user.nama?.charAt(0) || <UserIcon className="w-4 h-4" aria-hidden="true" />}
+                      </div>
+                    )}
+                    <div className="flex flex-col leading-tight min-w-0 text-left">
+                      <span className="text-xs font-bold text-white max-w-[140px] truncate">{user.nama}</span>
+                      <span className="text-[10px] font-semibold uppercase text-surat-gold-light">{user.role}</span>
                     </div>
-                  )}
-                  <div className="flex flex-col leading-tight min-w-0 text-left">
-                    <span className="text-xs font-bold text-white max-w-[140px] truncate">{user.nama}</span>
-                    <span className="text-[10px] font-semibold uppercase text-surat-gold-light">{user.role}</span>
+                  </Link>
+                ) : (
+                  <div className="hidden lg:inline-flex items-center gap-2 h-[44px] px-3 text-white/90">
+                    {user.foto && !imgError ? (
+                      <img
+                        src={getAssetUrl(user.foto)}
+                        alt={user.nama}
+                        width={32}
+                        height={32}
+                        loading="lazy"
+                        decoding="async"
+                        onError={() => setImgError(true)}
+                        className="w-8 h-8 rounded-full object-cover border border-white/30 shrink-0"
+                      />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-white/15 text-white flex items-center justify-center font-bold text-xs uppercase shrink-0">
+                        {user.nama?.charAt(0) || <UserIcon className="w-4 h-4" aria-hidden="true" />}
+                      </div>
+                    )}
+                    <div className="flex flex-col leading-tight min-w-0 text-left">
+                      <span className="text-xs font-bold text-white max-w-[140px] truncate">{user.nama}</span>
+                      <span className="text-[10px] font-semibold uppercase text-surat-gold-light">{user.role}</span>
+                    </div>
                   </div>
-                </div>
+                )}
 
                 <button
                   type="button"
