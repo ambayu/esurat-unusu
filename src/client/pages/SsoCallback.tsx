@@ -3,9 +3,8 @@ import { Link, useSearchParams } from 'react-router-dom';
 
 import { ssoLogin } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { SsoLoadingScreen } from '../components/SsoLoadingScreen';
 import {
-  ArrowPathIcon,
-  ShieldCheckIcon,
   ShieldExclamationIcon,
 } from '@heroicons/react/24/outline';
 
@@ -90,38 +89,33 @@ export function SsoCallbackPage() {
     };
   }, [params, saveSession]);
 
+  // Verifikasi tiket menunggu request jaringan nyata (server-to-server), jadi
+  // layar tunggu penuh memang pantas ditampilkan. Gayanya disamakan dengan
+  // layar tunggu di halaman login supaya seluruh rangkaian masuk terasa satu
+  // alur, bukan beberapa halaman berbeda.
+  if (!error) {
+    return (
+      <SsoLoadingScreen
+        title="Memverifikasi tiket masuk"
+        description="Aplikasi sedang memvalidasi token sekali pakai Anda. Jangan tutup halaman ini."
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4">
       <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl p-8 text-center">
-        {error ? (
-          <>
-            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-rose-50 text-rose-600 mb-4">
-              <ShieldExclamationIcon className="w-7 h-7" />
-            </div>
-            <h1 className="text-lg font-bold text-slate-900 mb-2">Login SSO Gagal</h1>
-            <p className="text-sm text-slate-600 mb-6">{error}</p>
-            <Link
-              to="/login"
-              className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-surat-green text-white text-sm font-bold hover:bg-surat-green-dark transition-all"
-            >
-              Kembali ke Halaman Login
-            </Link>
-          </>
-        ) : (
-          <>
-            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-surat-green-50 text-surat-green mb-4">
-              <ArrowPathIcon className="w-7 h-7 animate-spin" />
-            </div>
-            <h1 className="text-lg font-bold text-slate-900 mb-2">Memverifikasi Sesi SSO</h1>
-            <p className="text-sm text-slate-600">
-              Mohon tunggu, Malin sedang menghubungkan akun ONE UNUSU Sanak...
-            </p>
-            <div className="mt-6 flex items-center justify-center gap-2 text-xs text-surat-green font-medium">
-              <ShieldCheckIcon className="w-4 h-4" />
-              Token sekali pakai • berlaku 5 menit
-            </div>
-          </>
-        )}
+        <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-rose-50 text-rose-600 mb-4">
+          <ShieldExclamationIcon className="w-7 h-7" />
+        </div>
+        <h1 className="text-lg font-bold text-slate-900 mb-2">Login SSO Gagal</h1>
+        <p className="text-sm text-slate-600 mb-6">{error}</p>
+        <Link
+          to="/login"
+          className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-surat-green text-white text-sm font-bold hover:bg-surat-green-dark transition-all"
+        >
+          Kembali ke Halaman Login
+        </Link>
       </div>
     </div>
   );

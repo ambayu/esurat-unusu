@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRightIcon, ChevronLeftIcon, ShieldCheckIcon } from '@heroicons/react/24/outline';
+import { ArrowRightIcon, ChevronLeftIcon } from '@heroicons/react/24/outline';
 import { AnimatedFlatSsoLogo } from '../components/AnimatedFlatSsoLogo';
+import { SsoLoadingScreen } from '../components/SsoLoadingScreen';
 
-const ONE_UNUSU_URL = import.meta.env.VITE_ONE_UNUSU_URL || 'http://localhost:5173';
-const SSO_CLIENT_ID = import.meta.env.VITE_SSO_CLIENT_ID || 'esurat-unusu';
+const ONE_UNUSU_URL = import.meta.env.VITE_ONE_UNUSU_URL || 'https://unusu.bpp-developer.com/sso';
+const SSO_CLIENT_ID = import.meta.env.VITE_SSO_CLIENT_ID || 'cli6b92b2f89ffcf8bf';
 
 /**
  * Halaman masuk E-Surat UNUSU.
@@ -18,10 +19,34 @@ export function LoginPage() {
 
   const handleSsoLogin = () => {
     if (redirecting) return;
+    // Hanya menyalakan layar tunggu. Perpindahan ke Portal ONE UNUSU baru
+    // dijalankan oleh `onReady` setelah jeda animasi terlewati, sehingga logo
+    // SSO sempat terlihat utuh alih-alih berkedip sepersekian detik.
     setRedirecting(true);
+  };
+
+  const goToPortal = () => {
+  // Langsung ke /authorize, tanpa melewati halaman login portal.
+  // Portal sendiri yang menentukan: bila sesi SSO masih aktif, tiket diterbitkan
+  // dan pengguna mendarat di panel aplikasi ini; bila tidak, portal menampilkan
+  // form login lalu melanjutkan ke /authorize secara otomatis. Dengan begitu
+  // pengguna yang sudah login di ONE UNUSU tidak melihat form login dua kali.
     const target = `${ONE_UNUSU_URL}/authorize?client_id=${encodeURIComponent(SSO_CLIENT_ID)}`;
     window.location.href = target;
   };
+
+  // Layar tunggu satu halaman penuh selama browser berpindah ke Portal ONE
+  // UNUSU, supaya pengguna tidak menekan tombol masuk berulang kali.
+  if (redirecting) {
+    return (
+      <SsoLoadingScreen
+        title="Menghubungkan ke ONE UNUSU"
+        description="Mengalihkan Anda ke Portal Single Sign-On kampus. Jangan tutup halaman ini."
+        delayMs={1400}
+        onReady={goToPortal}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen w-full flex flex-col lg:flex-row bg-white relative selection:bg-surat-green selection:text-slate-950">
@@ -87,11 +112,6 @@ export function LoginPage() {
               <span>{redirecting ? 'Menghubungkan ke ONE UNUSU...' : 'Masuk dengan Akun SSO ONE UNUSU'}</span>
               {!redirecting && <ArrowRightIcon className="w-4 h-4" />}
             </button>
-
-            <div className="flex items-start justify-center sm:justify-start gap-1.5 text-[11px] text-[#64748B] font-medium leading-relaxed">
-              <ShieldCheckIcon className="w-3.5 h-3.5 text-[#166534] shrink-0 mt-0.5" />
-              <span>Satu akun kampus untuk seluruh layanan. Tiket SSO berlaku 5 menit dan hanya dapat dipakai sekali.</span>
-            </div>
           </div>
         </div>
 

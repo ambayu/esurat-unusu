@@ -46,9 +46,18 @@ function AppContent() {
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith('/admin');
 
+  // Halaman alur masuk SSO tampil sebagai layar penuh tersendiri: tanpa navbar
+  // dan footer. Navbar di sini hanya akan mengganggu (tautannya menuju panel
+  // yang belum boleh dibuka sebelum sesi ada) sekaligus menyalahi aturan bahwa
+  // navbar publik tidak boleh menautkan ke panel admin.
+  const isAuthRoute =
+    location.pathname === '/login' || location.pathname === '/sso/callback';
+
+  const showChrome = !isAdminRoute && !isAuthRoute;
+
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900 font-sans">
-      {!isAdminRoute && <Navbar />}
+      {showChrome && <Navbar />}
       <main className="flex-1">
         <Routes>
           {/* Route Publik: Landing Page publik E-Surat */}
@@ -100,7 +109,7 @@ function AppContent() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
-      {!isAdminRoute && <Footer />}
+      {showChrome && <Footer />}
     </div>
   );
 }
