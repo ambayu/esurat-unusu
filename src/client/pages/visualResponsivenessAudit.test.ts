@@ -119,7 +119,7 @@ function runVisualResponsivenessAudit() {
 
   // 7. Audit Fallback & Humanized Copy
   assert(
-    landingPageCode.includes('imageAlt') && landingPageCode.includes('alt={current.imageAlt}'),
+    landingPageCode.includes('imageAlt') && landingPageCode.includes('alt={slide.imageAlt}'),
     'Accessibility Alt Text: Setiap aset slide hero dilengkapi deskripsi alt kontekstual'
   );
 

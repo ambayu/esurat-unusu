@@ -6,7 +6,7 @@
  * 1. Perpindahan slide (nextSlide, prevSlide, dot navigation) & batasan index melingkar (wrap-around).
  * 2. Autoplay timer & logika pause pada interaksi (hover mouse & touch swipe).
  * 3. Logika swipe gesture (horizontal distance threshold min 50px).
- * 4. Ketersediaan dan kelengkapan slide item (3 slides, imageSrc, badge, ctaLink, themeGradient).
+ * 4. Ketersediaan dan kelengkapan slide item (3 slides, imageSrc, badge, ctaLink).
  * 5. Audit aksesibilitas & tap-target WCAG AA (min 44px) untuk tombol navigasi dan action buttons.
  */
 
@@ -18,7 +18,6 @@ interface SlideItem {
   description: string;
   primaryCtaText: string;
   primaryCtaLink: string;
-  themeGradient: string;
   imageSrc: string;
   imageAlt: string;
   bannerVisual: {
@@ -39,7 +38,6 @@ const HERO_SLIDES: SlideItem[] = [
       'Sistem resmi Universitas Nahdlatul Ulama Sumatera Utara (UNUSU) untuk pengajuan surat mahasiswa, dosen, pelacakan agenda persuratan, dan verifikasi dokumen digital berkeamanan tinggi.',
     primaryCtaText: 'Buka Agenda Persuratan',
     primaryCtaLink: '/surat',
-    themeGradient: 'from-emerald-950 via-teal-900 to-slate-950',
     imageSrc: '/images/hero-slider-1.png',
     imageAlt: 'Sistem Administrasi Persuratan Mahasiswa UNUSU',
     bannerVisual: {
@@ -62,7 +60,6 @@ const HERO_SLIDES: SlideItem[] = [
       'Setiap lembar naskah dinas, keterangan aktif, dan rekomendasi riset dilengkapi tanda pengenal kriptografis QR Code yang dapat langsung diverifikasi oleh pihak eksternal maupun internal.',
     primaryCtaText: 'Verifikasi Dokumen Sekarang',
     primaryCtaLink: '/verifikasi',
-    themeGradient: 'from-slate-950 via-blue-950 to-emerald-950',
     imageSrc: '/images/hero-slider-2.png',
     imageAlt: 'Verifikasi Otentikasi QR Code Naskah Dinas',
     bannerVisual: {
@@ -85,7 +82,6 @@ const HERO_SLIDES: SlideItem[] = [
       'Persetujuan pimpinan, penomoran otomatis berstandar baku UNUSU, hingga pendistribusian tembusan antar biro kini berlangsung sepenuhnya dalam lingkungan digital terpadu.',
     primaryCtaText: 'Buka Agenda & Disposisi',
     primaryCtaLink: '/surat',
-    themeGradient: 'from-teal-950 via-slate-900 to-emerald-950',
     imageSrc: '/images/hero-slider-3.png',
     imageAlt: 'Workflow Disposisi Paperless Rektorat UNUSU',
     bannerVisual: {

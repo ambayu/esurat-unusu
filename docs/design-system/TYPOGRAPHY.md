@@ -1,4 +1,4 @@
-# TYPOGRAPHY SYSTEM — E-SURAT UNUSU
+# TYPOGRAPHY SYSTEM : E-SURAT UNUSU
 
 Standar tipografi resmi aplikasi E-Surat UNUSU menggunakan font keluarga **Plus Jakarta Sans** (dengan fallback Inter dan sistem sans-serif).
 

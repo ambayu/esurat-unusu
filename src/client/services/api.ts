@@ -58,12 +58,34 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+/**
+ * Rute publik yang boleh dibuka tanpa sesi. Respons 401 TIDAK boleh melempar
+ * pengguna ke /login dari halaman-halaman ini.
+ *
+ * Cara lama membandingkan `window.location.pathname` dengan `BASE_URL + 'login'`.
+ * Perbandingan itu rapuh: bila BASE_URL bukan '/' atau pathname berakhir garis
+ * miring, hasilnya tidak cocok sehingga halaman publik seperti '/' ikut
+ * terlempar ke /login. Sekarang pathname dinormalisasi lalu dicocokkan ke
+ * daftar rute publik yang eksplisit.
+ */
+const PUBLIC_PATHS = ['/', '/login', '/sso/callback', '/akses-ditolak'];
+
+const isPublicPath = (pathname: string) => {
+  const base = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+  let path = pathname;
+  if (base && path.startsWith(base)) {
+    path = path.slice(base.length);
+  }
+  path = path.replace(/\/+$/, '').replace(/\/index\.html$/, '');
+  return PUBLIC_PATHS.includes(path || '/');
+};
+
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     const status = error.response?.status;
     const path = window.location.pathname;
-    if (status === 401 && path !== import.meta.env.BASE_URL + 'login' && path !== import.meta.env.BASE_URL + 'sso/callback') {
+    if (status === 401 && !isPublicPath(path)) {
       localStorage.removeItem(TOKEN_KEY);
       localStorage.removeItem(USER_KEY);
       window.location.replace(import.meta.env.BASE_URL + 'login');

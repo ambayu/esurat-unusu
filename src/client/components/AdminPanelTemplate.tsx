@@ -24,13 +24,13 @@ export const AdminPanelTemplate: React.FC<AdminPanelTemplateProps> = ({
 }) => {
   return (
     <div
-      className={`w-full min-w-0 bg-white border border-[#CBD5E1] rounded-[16px] shadow-xs overflow-hidden ${className}`}
+      className={`w-full min-w-0 bg-white border border-[#CBD5E1] rounded-[16px] overflow-hidden ${className}`}
     >
       {/* Panel Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-5 sm:p-6 border-b border-[#CBD5E1] bg-white">
         <div>
           <div className="flex items-center gap-2.5">
-            <h1 className="text-xl sm:text-2xl font-bold tracking-normal text-slate-900">{title}</h1>
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900">{title}</h1>
             {badge}
           </div>
           <p className="text-xs sm:text-sm text-slate-500 mt-1 font-normal leading-relaxed">{description}</p>

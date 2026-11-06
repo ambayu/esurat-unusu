@@ -62,7 +62,7 @@ app.get("/api/health", (req: Request, res: Response) => {
 });
 
 // ==========================================
-// SSO ONE UNUSU — satu pintu, tanpa login lokal
+// SSO ONE UNUSU : satu pintu, tanpa login lokal
 // ==========================================
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {

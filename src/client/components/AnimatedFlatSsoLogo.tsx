@@ -1,7 +1,7 @@
 import React from 'react';
 
 /**
- * AnimatedFlatSsoLogo — Logo identitas ONE UNUSU
+ * AnimatedFlatSsoLogo : Logo identitas ONE UNUSU
  *
  * Angka "1" ikonis statis di pusat squircle hijau UNUSU,
  * dikelilingi 6 satelit berwarna yang mengorbit.
@@ -80,7 +80,7 @@ export const AnimatedFlatSsoLogo: React.FC<Props> = ({ size = 200, className = '
           style={{ animation: 'onuGlow 4s ease-in-out infinite' }}
         />
 
-        {/* ===== Orbit Luar — CW (6 Satelit Berputar) ===== */}
+        {/* ===== Orbit Luar : CW (6 Satelit Berputar) ===== */}
         <g style={{ transformOrigin: `${cx}px ${cy}px`, animation: 'onuOrbitCW 24s linear infinite' }}>
           <circle
             cx={cx} cy={cy} r={orbitR}
@@ -104,7 +104,7 @@ export const AnimatedFlatSsoLogo: React.FC<Props> = ({ size = 200, className = '
           })}
         </g>
 
-        {/* ===== Orbit Dalam — CCW (3 Gold Connectors) ===== */}
+        {/* ===== Orbit Dalam : CCW (3 Gold Connectors) ===== */}
         <g style={{ transformOrigin: `${cx}px ${cy}px`, animation: 'onuOrbitCCW 16s linear infinite' }}>
           <circle
             cx={cx} cy={cy} r="62"
@@ -117,7 +117,7 @@ export const AnimatedFlatSsoLogo: React.FC<Props> = ({ size = 200, className = '
           <circle cx={46} cy={128} r="3.5" fill="#FBBF24" />
         </g>
 
-        {/* ===== Core Badge — STATIS (tidak bergerak, tulisan jelas) ===== */}
+        {/* ===== Core Badge : STATIS (tidak bergerak, tulisan jelas) ===== */}
         <g>
           <circle cx={cx} cy={cy} r="46" fill="#14532D" opacity="0.10" />
 

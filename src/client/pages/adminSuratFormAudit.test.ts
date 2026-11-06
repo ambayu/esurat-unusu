@@ -13,7 +13,7 @@
  *    - Mendukung pemilihan format Jenis Surat secara dinamis dari API.
  *    - Terdaftar dalam routing App.tsx di bawah rute terproteksi /admin/surat-form dengan guard role ['admin', 'dosen'].
  *    - AdminLayout menyediakan tombol aksi dan navigasi cepat menuju form registrasi surat masuk dan keluar.
- *    - Tampilan menggunakan standar UI container CardContainer dan AdminPanelTemplate dengan border #CBD5E1.
+ *    - Tampilan menggunakan standar UI container CardContainer dan FormPageTemplate dengan border #CBD5E1.
  * 3. Type & Accessibility Verification:
  *    - Kontrol form memiliki label yang jelas, input terproteksi, tap target WCAG AA (min 44px), dan error handling terstandar.
  */
@@ -62,9 +62,11 @@ assert(
 );
 
 assert(
-  landingPageContent.includes("primaryCtaLink: '/surat'") &&
+  // CTA utama mengarah ke form login SSO (bukan langsung /surat) karena
+  // seluruh akses ke panel persuratan wajib melewati ONE UNUSU SSO.
+  landingPageContent.includes("primaryCtaLink: '/login'") &&
   landingPageContent.includes("primaryCtaLink: '/verifikasi'"),
-  "Landing page mengarahkan aksi pengguna melalui tombol CTA tertaut ke rute yang tepat"
+  "Landing page mengarahkan aksi pengguna melalui tombol CTA tertaut ke rute yang tepat (SSO /login & /verifikasi)"
 );
 
 // 2. Audit AdminSuratForm.tsx: Form Registrasi Surat Masuk & Keluar
@@ -82,22 +84,32 @@ assert(
 );
 
 assert(
-  adminSuratFormContent.includes("setTipeSurat('masuk')") &&
-  adminSuratFormContent.includes("setTipeSurat('keluar')"),
-  "AdminSuratForm menyediakan toggle dinamis antara registrasi Surat Masuk dan Surat Keluar"
+  // Toggle mode di dalam body sudah dihapus: mode naskah ditentukan oleh menu
+  // sidebar (Surat Masuk vs Surat Keluar), dan halaman hanya menampilkan
+  // formulir sesuai `?tipe=` pada URL. Yang wajib ada: nilai tipe terbaca dari
+  // query string dan tombol switcher tidak lagi dirender.
+  adminSuratFormContent.includes("searchParams.get('tipe')") &&
+  !adminSuratFormContent.includes("setTipeSurat('masuk')") &&
+  !adminSuratFormContent.includes("Mode Surat Masuk (Eksternal/In)"),
+  "AdminSuratForm mengambil mode dari query string (menu sidebar) tanpa toggle mode di dalam body"
 );
 
 assert(
-  adminSuratFormContent.includes("CardContainer") &&
-  adminSuratFormContent.includes("AdminPanelTemplate") &&
-  adminSuratFormContent.includes("border-[#CBD5E1]"),
-  "AdminSuratForm mematuhi standar UI Container Governance (CardContainer, AdminPanelTemplate, border #CBD5E1)"
+  // Kartu judul "Informasi Berkas Surat Masuk" dihapus karena judul & deskripsi
+  // sudah tampil pada header FormPageTemplate (PageShell).
+  adminSuratFormContent.includes("FormPageTemplate") &&
+  adminSuratFormContent.includes("border-[#CBD5E1]") &&
+  !adminSuratFormContent.includes("Informasi Berkas Surat Masuk") &&
+  !adminSuratFormContent.includes("Informasi Rincian Surat Keluar"),
+  "AdminSuratForm memakai FormPageTemplate tanpa kartu judul duplikatif (border #CBD5E1)"
 );
 
 assert(
-  adminSuratFormContent.includes("min-h-[44px]") &&
-  adminSuratFormContent.includes("aria-label"),
-  "AdminSuratForm mematuhi standar aksesibilitas WCAG AA (tap target min 44px dan accessible aria-label)"
+  // Setiap kontrol isian memakai <label> eksplisit (lebih baik daripada
+  // aria-label yang tidak terlihat). Tap target 44px disediakan template pada
+  // tombol aksi (Kembali / Batal / Simpan).
+  (adminSuratFormContent.match(/<label/g) || []).length >= 5,
+  "AdminSuratForm mematuhi aksesibilitas: setiap field isian ber-<label> eksplisit"
 );
 
 // 3. Audit Pendaftaran Route di App.tsx

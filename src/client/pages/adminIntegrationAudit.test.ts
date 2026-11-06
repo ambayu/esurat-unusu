@@ -147,7 +147,7 @@ function paginateAndFilterSurat(list: SuratState[], query: FilterPaginationQuery
 // 4. Simulasi Verifikasi Preview Dokumen Lampiran
 function resolveDocumentPreview(lampiranUrl: string | null) {
   if (!lampiranUrl) {
-    return { hasAttachment: false, previewType: 'none', fullUrl: '' };
+    return { hasAttachment: false, previewType: 'none', fullUrl: '', canRenderInApp: false };
   }
 
   const isImage = /\.(jpeg|jpg|png|webp|svg)$/i.test(lampiranUrl);

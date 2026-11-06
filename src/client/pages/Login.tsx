@@ -24,7 +24,7 @@ export function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen w-full flex flex-col lg:flex-row bg-white relative selection:bg-amber-400 selection:text-slate-950">
+    <div className="min-h-screen w-full flex flex-col lg:flex-row bg-white relative selection:bg-surat-green selection:text-slate-950">
       {/* ===== SISI KIRI: FORM LOGIN SSO ===== */}
       <div className="w-full lg:w-1/2 flex flex-col justify-between p-6 sm:p-12 lg:p-16 xl:p-20 z-10">
         {/* Nav Kembali */}
@@ -42,12 +42,11 @@ export function LoginPage() {
         <div className="max-w-md w-full mx-auto my-auto py-6 space-y-7 text-center sm:text-left">
           {/* Header */}
           <div className="space-y-2">
-            <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-[#F0FDF4] text-[#166534] border border-[#BBF7D0]">
-              <span className="w-2 h-2 rounded-full bg-[#22C55E]" />
-              <span>Persuratan &amp; Disposisi Digital</span>
-            </div>
+            <p className="border-l-2 border-[#166534] pl-3 text-xs font-bold uppercase tracking-[0.14em] text-[#166534]">
+              Persuratan &amp; Disposisi Digital
+            </p>
 
-            <h1 className="text-3xl sm:text-4xl font-black text-[#1E293B] tracking-tight">
+            <h1 className="text-3xl sm:text-4xl font-extrabold text-[#1E293B] tracking-tight">
               Masuk ke <span className="text-[#166534]">E-Surat UNUSU</span>
             </h1>
             <p className="text-xs sm:text-sm text-[#64748B] leading-relaxed font-normal">
@@ -55,16 +54,16 @@ export function LoginPage() {
             </p>
           </div>
 
-          {/* Logo ONE UNUSU — Bisa Ditekan, Mengarah ke ONE UNUSU */}
+          {/* Logo ONE UNUSU : Bisa Ditekan, Mengarah ke ONE UNUSU */}
           <div className="flex flex-col items-center space-y-3">
             <AnimatedFlatSsoLogo
               size={210}
-              onClick={() => { window.location.href = ONE_UNUSU_URL; }}
+              onClick={handleSsoLogin}
             />
             <div className="text-center space-y-1">
               <div className="flex items-center justify-center space-x-1.5">
-                <span className="font-black text-xl text-[#1E293B] tracking-tight">ONE</span>
-                <span className="font-black text-xl text-[#166534] tracking-tight">UNUSU</span>
+                <span className="font-extrabold text-xl text-[#1E293B] tracking-tight">ONE</span>
+                <span className="font-extrabold text-xl text-[#166534] tracking-tight">UNUSU</span>
               </div>
               <p className="text-[11px] text-[#64748B] font-semibold">
                 Ekosistem Digital Terpadu Kampus
@@ -75,7 +74,7 @@ export function LoginPage() {
             </div>
           </div>
 
-          {/* Tombol Masuk SSO — gaya identik dengan tombol masuk pada halaman login ONE UNUSU */}
+          {/* Tombol Masuk SSO : gaya identik dengan tombol masuk pada halaman login ONE UNUSU */}
           <div className="space-y-3">
             <button
               type="button"
@@ -83,7 +82,7 @@ export function LoginPage() {
               disabled={redirecting}
               data-testid="login-sso-button"
               aria-label="Masuk dengan Akun SSO ONE UNUSU"
-              className="w-full min-h-[48px] py-3.5 px-4 bg-[#166534] hover:bg-[#14532D] active:bg-[#14532D] text-white font-semibold text-sm rounded-[8px] shadow-xs transition duration-150 disabled:opacity-50 flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-[#166534] focus:ring-offset-2"
+              className="w-full min-h-[48px] py-3.5 px-4 bg-[#166534] hover:bg-[#14532D] active:bg-[#14532D] text-white font-semibold text-sm rounded-[8px] transition duration-150 disabled:opacity-50 flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-[#166534] focus:ring-offset-2"
             >
               <span>{redirecting ? 'Menghubungkan ke ONE UNUSU...' : 'Masuk dengan Akun SSO ONE UNUSU'}</span>
               {!redirecting && <ArrowRightIcon className="w-4 h-4" />}
@@ -98,7 +97,7 @@ export function LoginPage() {
 
         {/* Footer */}
         <div className="text-xs text-slate-500 text-center sm:text-left">
-          &copy; {new Date().getFullYear()} E-Surat UNUSU — Universitas Nahdlatul Ulama Sumatera Utara
+          &copy; {new Date().getFullYear()} E-Surat UNUSU : Universitas Nahdlatul Ulama Sumatera Utara
         </div>
       </div>
 
@@ -117,15 +116,14 @@ export function LoginPage() {
           }}
           className="absolute inset-0 w-full h-full object-cover object-center filter brightness-[0.82]"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-teal-950/95 via-teal-950/40 to-transparent pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/95 via-slate-950/40 to-transparent pointer-events-none" />
 
         <div className="relative z-10 max-w-lg space-y-3">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-900/80 border border-teal-400/40 text-teal-100 text-xs font-semibold backdrop-blur-xs">
-            <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
-            <span>Tata Kelola Persuratan Digital</span>
-          </div>
+          <p className="border-l-2 border-white/60 pl-3 text-xs font-bold uppercase tracking-[0.14em] text-white/90">
+            Tata Kelola Persuratan Digital
+          </p>
 
-          <h2 className="text-2xl sm:text-4xl font-black tracking-tight text-white drop-shadow-md leading-tight">
+          <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white drop-shadow-md leading-tight">
             Administrasi Surat Resmi Tanpa Kertas
           </h2>
 

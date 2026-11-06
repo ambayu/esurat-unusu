@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Navbar } from './components/Navbar';
+import { Footer } from './components/Footer';
 import { LandingPage } from './pages/LandingPage';
 import { SuratList } from './pages/SuratList';
 import { SuratDetail } from './pages/SuratDetail';
@@ -10,8 +11,12 @@ import { SsoCallbackPage } from './pages/SsoCallback';
 import { AdminLayout } from './components/AdminLayout';
 import { AdminDashboard } from './pages/AdminDashboard';
 import { JenisSuratManagement } from './pages/JenisSuratManagement';
+import { JenisSuratFormPage } from './pages/JenisSuratForm';
 import { AdminSuratForm } from './pages/AdminSuratForm';
-import { RbacManagement } from './pages/RbacManagement';
+import { ManajemenPengguna } from './pages/ManajemenPengguna';
+import { Peran } from './pages/Peran';
+import { Izin } from './pages/Izin';
+import { Profil } from './pages/Profil';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
 interface ProtectedRouteProps {
@@ -76,8 +81,18 @@ function AppContent() {
             <Route path="surat" element={<SuratList />} />
             <Route path="surat/:id" element={<SuratDetail />} />
             <Route path="jenis-surat" element={<JenisSuratManagement />} />
+            <Route path="jenis-surat/tambah" element={<JenisSuratFormPage />} />
+            <Route path="jenis-surat/edit/:id" element={<JenisSuratFormPage />} />
             <Route path="surat-form" element={<AdminSuratForm />} />
-            <Route path="rbac" element={<RbacManagement />} />
+            {/* Menu grup Tata Kelola: Pengguna → Peran → Izin (masing-masing menu mandiri) */}
+            <Route path="pengguna" element={<ManajemenPengguna />} />
+            <Route path="peran" element={<Peran />} />
+            <Route path="izin" element={<Izin />} />
+            {/* Kompatibilitas tautan lama */}
+            <Route path="peran-izin" element={<Navigate to="/admin/peran" replace />} />
+            <Route path="profil" element={<Profil />} />
+            {/* Kompatibilitas tautan lama: diarahkan ke /admin/peran */}
+            <Route path="rbac" element={<Navigate to="/admin/peran" replace />} />
           </Route>
 
           {/* Shortcut dashboard diarahkan ke /admin jika admin/staff atau /surat */}
@@ -85,11 +100,7 @@ function AppContent() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
-      {!isAdminRoute && (
-        <footer className="bg-white border-t border-slate-200 py-6 text-center text-xs text-slate-500">
-          <p>© {new Date().getFullYear()} E-Surat UNUSU — Tata Naskah & Disposisi Digital Universitas Nahdlatul Ulama Sumatera Utara</p>
-        </footer>
-      )}
+      {!isAdminRoute && <Footer />}
     </div>
   );
 }

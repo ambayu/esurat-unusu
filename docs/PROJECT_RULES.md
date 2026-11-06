@@ -1,4 +1,4 @@
-# PROJECT RULES — E-SURAT UNUSU
+# PROJECT RULES : E-SURAT UNUSU
 
 Dokumen ini berisi aturan global mutlak yang berlaku di seluruh modul, halaman, API endpoint, dan komponen aplikasi E-Surat UNUSU.
 

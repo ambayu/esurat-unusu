@@ -1,26 +1,28 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { fetchSuratList, deleteSurat, SuratItem, PaginationInfo } from '../services/api';
+import { ListPageTemplate, ListActionButton } from '../components/ListPageTemplate';
 import { useAuth } from '../context/AuthContext';
-import { 
-  Mail, 
-  Clock, 
-  CheckCircle2, 
-  AlertCircle, 
-  FileText, 
-  ArrowRight, 
-  Plus, 
-  Search, 
-  Filter, 
-  ChevronLeft, 
-  ChevronRight, 
-  RefreshCw,
-  Inbox,
-  Send,
-  Eye,
-  Trash2,
-  ExternalLink
-} from 'lucide-react';
+import {
+  ArrowPathIcon,
+  ArrowRightIcon,
+  ArrowTopRightOnSquareIcon,
+  CheckCircleIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  ClockIcon,
+  DocumentTextIcon,
+  EnvelopeIcon,
+  ExclamationCircleIcon,
+  EyeIcon,
+  FunnelIcon,
+  InboxIcon,
+  MagnifyingGlassIcon,
+  PaperAirplaneIcon,
+  PlusIcon,
+  TrashIcon,
+} from '@heroicons/react/24/outline';
+
 
 export const SuratList: React.FC = () => {
   const { user } = useAuth();
@@ -29,6 +31,7 @@ export const SuratList: React.FC = () => {
 
   const [suratList, setSuratList] = useState<SuratItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [tipeFilter, setTipeFilter] = useState(queryTipe);
@@ -52,6 +55,7 @@ export const SuratList: React.FC = () => {
     currentTipe = tipeFilter
   ) => {
     setLoading(true);
+    setError(null);
     fetchSuratList({
       page: currentPage,
       limit: 8,
@@ -65,7 +69,10 @@ export const SuratList: React.FC = () => {
           setPagination(res.data.pagination);
         }
       })
-      .catch((err) => console.error('Gagal mengambil data surat:', err))
+      .catch((err) => {
+        console.error('Gagal mengambil data surat:', err);
+        setError('Gagal memuat daftar surat. Periksa koneksi lalu coba lagi.');
+      })
       .finally(() => setLoading(false));
   };
 
@@ -108,116 +115,90 @@ export const SuratList: React.FC = () => {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'selesai':
-        return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800"><CheckCircle2 className="w-3 h-3 mr-1" /> Selesai</span>;
+        return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-surat-green-100 text-surat-green-dark"><CheckCircleIcon className="w-3 h-3 mr-1" /> Selesai</span>;
       case 'diproses':
-        return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800"><Clock className="w-3 h-3 mr-1" /> Diproses</span>;
+        return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-200 text-slate-800"><ClockIcon className="w-3 h-3 mr-1" /> Diproses</span>;
       case 'disetujui':
-        return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-100 text-indigo-800"><CheckCircle2 className="w-3 h-3 mr-1" /> Disetujui</span>;
+        return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-200 text-slate-700"><CheckCircleIcon className="w-3 h-3 mr-1" /> Disetujui</span>;
       case 'ditolak':
-        return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-800"><AlertCircle className="w-3 h-3 mr-1" /> Ditolak</span>;
+        return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-800"><ExclamationCircleIcon className="w-3 h-3 mr-1" /> Ditolak</span>;
       default:
-        return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800"><Clock className="w-3 h-3 mr-1" /> Diajukan</span>;
+        return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800"><ClockIcon className="w-3 h-3 mr-1" /> Diajukan</span>;
     }
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-      {/* Top Banner / Actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-slate-200/90 shadow-2xs">
-        <div>
-          <h1 className="text-2xl font-extrabold text-slate-900">Agenda Persuratan Digital</h1>
-          <p className="text-xs text-slate-500 mt-1">Lacak status permohonan surat keterangan, izin riset, surat tugas, dan disposisi pimpinan.</p>
-        </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <Link
-              to="/admin/surat-form?tipe=masuk"
-              className="inline-flex items-center justify-center px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-blue-700 font-bold text-xs shadow-2xs transition min-h-[44px]"
-            >
-              <Inbox className="w-4 h-4 mr-1.5" />
-              <span>Input Surat Masuk</span>
-            </Link>
-            <Link
-              to="/admin/surat-form?tipe=keluar"
-              className="inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs shadow-md transition min-h-[44px]"
-            >
-              <Send className="w-4 h-4 mr-1.5" />
-              <span>Input Surat Keluar</span>
-            </Link>
-          </div>
-      </div>
-
-      {/* Tabs Filter Tipe Surat */}
-      <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
-        <button
-          type="button"
-          onClick={() => handleTipeChange('all')}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition min-h-[44px] flex items-center gap-2 cursor-pointer ${
-            tipeFilter === 'all'
-              ? 'bg-emerald-700 text-white shadow-xs'
-              : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
-          }`}
-        >
-          <FileText className="w-4 h-4" />
-          <span>Semua Agenda ({suratList.length})</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => handleTipeChange('masuk')}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition min-h-[44px] flex items-center gap-2 cursor-pointer ${
-            tipeFilter === 'masuk'
-              ? 'bg-blue-600 text-white shadow-xs'
-              : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
-          }`}
-        >
-          <Inbox className="w-4 h-4" />
-          <span>Surat Masuk</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => handleTipeChange('keluar')}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition min-h-[44px] flex items-center gap-2 cursor-pointer ${
-            tipeFilter === 'keluar'
-              ? 'bg-emerald-700 text-white shadow-xs'
-              : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
-          }`}
-        >
-          <Send className="w-4 h-4" />
-          <span>Surat Keluar</span>
-        </button>
-      </div>
-
-      {/* Filters & Search */}
-      <form onSubmit={handleSearchSubmit} className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Cari perihal, nomor agenda, atau nama pemohon..."
-            className="w-full pl-10 pr-4 py-2 text-xs rounded-xl border border-slate-200 bg-white focus:outline-emerald-600"
-          />
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Filter Tipe Surat: Masuk, Keluar, Semua */}
-          <select
-            value={tipeFilter}
-            onChange={(e) => handleTipeChange(e.target.value)}
-            aria-label="Filter tipe surat"
-            className="text-xs py-2 px-3 rounded-xl border border-slate-200 bg-white focus:outline-emerald-600 font-semibold text-slate-700 min-h-[44px]"
+    <ListPageTemplate<SuratItem>
+      title="Agenda Persuratan Digital"
+      description="Lacak status permohonan surat keterangan, izin riset, surat tugas, dan disposisi pimpinan."
+      badge={
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-surat-green-100 text-surat-green-dark uppercase tracking-wider">
+          Agenda Surat
+        </span>
+      }
+      actions={
+        <>
+          <ListActionButton
+            to="/admin/surat-form?tipe=masuk"
+            variant="secondary"
+            icon={<InboxIcon className="w-4 h-4" />}
           >
-            <option value="all">Semua Tipe (Masuk & Keluar)</option>
-            <option value="masuk">Surat Masuk Saja</option>
-            <option value="keluar">Surat Keluar Saja</option>
-          </select>
+            Input Surat Masuk
+          </ListActionButton>
+          <ListActionButton
+            to="/admin/surat-form?tipe=keluar"
+            icon={<PaperAirplaneIcon className="w-4 h-4" />}
+          >
+            Input Surat Keluar
+          </ListActionButton>
+        </>
+      }
+      searchValue={search}
+      onSearchChange={setSearch}
+      searchPlaceholder="Cari perihal, nomor agenda, atau nama pemohon..."
+      filters={
+        <>
+          {/* Tab tipe surat */}
+          <button
+            type="button"
+            onClick={() => handleTipeChange('all')}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition min-h-[44px] ${
+              tipeFilter === 'all'
+                ? 'bg-surat-green text-white'
+                : 'bg-white text-slate-600 hover:bg-slate-100 border border-[#CBD5E1]'
+            }`}
+          >
+            Semua ({suratList.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => handleTipeChange('masuk')}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition min-h-[44px] ${
+              tipeFilter === 'masuk'
+                ? 'bg-surat-green text-white'
+                : 'bg-white text-slate-600 hover:bg-slate-100 border border-[#CBD5E1]'
+            }`}
+          >
+            Masuk
+          </button>
+          <button
+            type="button"
+            onClick={() => handleTipeChange('keluar')}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition min-h-[44px] ${
+              tipeFilter === 'keluar'
+                ? 'bg-surat-green text-white'
+                : 'bg-white text-slate-600 hover:bg-slate-100 border border-[#CBD5E1]'
+            }`}
+          >
+            Keluar
+          </button>
 
-          <Filter className="w-4 h-4 text-slate-400" />
+          {/* FunnelIcon status */}
           <select
             value={statusFilter}
             onChange={(e) => handleStatusChange(e.target.value)}
-            className="text-xs py-2 px-3 rounded-xl border border-slate-200 bg-white focus:outline-emerald-600"
+            aria-label="FunnelIcon status surat"
+            className="text-xs py-2 px-3 rounded-xl border border-[#CBD5E1] bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/20 font-semibold text-slate-700 min-h-[44px]"
           >
             <option value="all">Semua Status</option>
             <option value="diajukan">Diajukan</option>
@@ -226,162 +207,170 @@ export const SuratList: React.FC = () => {
             <option value="selesai">Selesai</option>
             <option value="ditolak">Ditolak</option>
           </select>
-          <button
-            type="submit"
-            className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition cursor-pointer"
-          >
-            Cari
-          </button>
-        </div>
-      </form>
-
-      {/* Data Table View */}
-      {loading ? (
-        <div className="p-16 text-center text-slate-400 flex items-center justify-center gap-2">
-          <RefreshCw className="w-4 h-4 animate-spin text-emerald-600" />
-          <span>Memuat data persuratan...</span>
-        </div>
-      ) : (
-        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-2xs">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className="border-b border-[#CBD5E1] bg-slate-50 text-slate-700 font-bold">
-                  <th className="py-3.5 px-4">Agenda / Nomor Surat</th>
-                  <th className="py-3.5 px-4">Tipe & Jenis</th>
-                  <th className="py-3.5 px-4">Perihal / Keperluan</th>
-                  <th className="py-3.5 px-4">Pemohon</th>
-                  <th className="py-3.5 px-4">Tanggal</th>
-                  <th className="py-3.5 px-4 text-center">Status</th>
-                  <th className="py-3.5 px-4 text-right">Aksi</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {suratList.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="py-12 text-center text-slate-400">
-                      Tidak ada data persuratan yang cocok dengan filter atau kata kunci.
-                    </td>
-                  </tr>
-                ) : (
-                  suratList.map((item) => (
-                    <tr key={item.id} className="hover:bg-slate-50/80 transition">
-                      <td className="py-3.5 px-4">
-                        <div className="font-mono font-bold text-slate-800 text-xs">
-                          {item.nomorAgenda}
-                        </div>
-                        {item.nomorSurat ? (
-                          <div className="text-[11px] font-mono text-emerald-700 mt-0.5">
-                            {item.nomorSurat}
-                          </div>
-                        ) : (
-                          <div className="text-[10px] text-slate-400 italic">Belum bernomor resmi</div>
-                        )}
-                      </td>
-                      <td className="py-3.5 px-4">
-                        <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded uppercase mb-1 ${
-                          item.tipeSurat === 'masuk' ? 'bg-blue-50 text-blue-700' : 'bg-emerald-50 text-emerald-700'
-                        }`}>
-                          {item.tipeSurat === 'masuk' ? 'Surat Masuk' : 'Surat Keluar'}
-                        </span>
-                        <div className="text-slate-600 font-medium truncate max-w-[140px]" title={item.jenisSurat?.nama}>
-                          {item.jenisSurat?.nama || 'Surat'}
-                        </div>
-                      </td>
-                      <td className="py-3.5 px-4 max-w-xs">
-                        <div className="font-bold text-slate-900 line-clamp-1" title={item.perihal}>
-                          {item.perihal}
-                        </div>
-                        {item.keperluan && (
-                          <div className="text-[11px] text-slate-500 line-clamp-1 mt-0.5" title={item.keperluan}>
-                            {item.keperluan}
-                          </div>
-                        )}
-                      </td>
-                      <td className="py-3.5 px-4">
-                        <div className="font-bold text-slate-800">{item.pemohonNama}</div>
-                        <div className="text-[11px] text-slate-400">
-                          {item.pemohonProdi ? `${item.pemohonProdi}` : item.pemohonId || '-'}
-                        </div>
-                      </td>
-                      <td className="py-3.5 px-4 text-slate-500 whitespace-nowrap">
-                        {new Date(item.createdAt).toLocaleDateString('id-ID', {
-                          day: 'numeric',
-                          month: 'short',
-                          year: 'numeric'
-                        })}
-                      </td>
-                      <td className="py-3.5 px-4 text-center whitespace-nowrap">
-                        {getStatusBadge(item.status)}
-                      </td>
-                      <td className="py-3.5 px-4 text-right whitespace-nowrap">
-                        <div className="inline-flex items-center gap-1.5">
-                          <Link
-                            to={`/admin/surat/${item.id}`}
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-[#CBD5E1] bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs transition"
-                            title="Detail & Disposisi"
-                          >
-                            <Eye className="w-3.5 h-3.5 text-emerald-700" />
-                            <span>Detail</span>
-                          </Link>
-                          <Link
-                            to={`/verifikasi/${item.qrCodeToken}`}
-                            target="_blank"
-                            className="p-1.5 rounded-lg border border-[#CBD5E1] bg-white hover:bg-slate-50 text-slate-500 hover:text-emerald-700 transition"
-                            title="TTE & Verifikasi QR"
-                          >
-                            <ExternalLink className="w-3.5 h-3.5" />
-                          </Link>
-                          {canDeleteSurat && (
-                            <button
-                              type="button"
-                              onClick={() => handleDelete(item.id)}
-                              className="p-1.5 rounded-lg border border-[#CBD5E1] bg-white hover:bg-rose-50 text-slate-500 hover:text-rose-700 transition"
-                              title="Hapus Surat"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Pagination Controls */}
-          {pagination && pagination.totalPages > 1 && (
-            <div className="flex items-center justify-between p-4 border-t border-slate-200 text-xs text-slate-600 bg-slate-50/50">
-              <div>
-                Menampilkan halaman <strong className="font-bold text-slate-900">{pagination.page}</strong> dari{' '}
-                <strong className="font-bold text-slate-900">{pagination.totalPages}</strong> (Total {pagination.total} surat)
-              </div>
-              <div className="flex items-center space-x-2">
-                <button
-                  type="button"
-                  disabled={!pagination.hasPrevPage}
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  className="px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 font-semibold"
-                >
-                  <ChevronLeft className="w-3.5 h-3.5" />
-                  <span>Sebelumnya</span>
-                </button>
-                <button
-                  type="button"
-                  disabled={!pagination.hasNextPage}
-                  onClick={() => setPage((p) => p + 1)}
-                  className="px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 font-semibold"
-                >
-                  <span>Selanjutnya</span>
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
+        </>
+      }
+      tableTitle="Daftar Agenda Surat"
+      tableSubtitle={`Menampilkan ${suratList.length} naskah dinas${pagination ? ` dari total ${pagination.total}` : ''}.`}
+      tableBadge={
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-surat-green-50 text-surat-green-dark border border-surat-green-100">
+          {suratList.length} Surat
+        </span>
+      }
+      loading={loading}
+      error={error}
+      onRetry={loadData}
+      hasActiveFilter={Boolean(search.trim() || tipeFilter !== 'all' || statusFilter !== 'all')}
+      emptyMessage="Belum ada naskah surat terdaftar."
+      noResultMessage="Tidak ada data persuratan yang cocok dengan filter atau kata kunci."
+      rowKey={(item) => item.id}
+      rows={suratList}
+      footer={
+        pagination && pagination.totalPages > 1 ? (
+          <div className="flex items-center justify-between p-4 border-t border-[#CBD5E1] text-xs text-slate-600 bg-slate-50/50">
+            <div>
+              Menampilkan halaman <strong className="font-bold text-slate-900">{pagination.page}</strong> dari{' '}
+              <strong className="font-bold text-slate-900">{pagination.totalPages}</strong> (Total {pagination.total} surat)
             </div>
-          )}
-        </div>
-      )}
-    </div>
+            <div className="flex items-center space-x-2">
+              <button
+                type="button"
+                disabled={!pagination.hasPrevPage}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                className="px-3 py-1.5 rounded-xl border border-[#CBD5E1] bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 font-semibold"
+              >
+                <ChevronLeftIcon className="w-3.5 h-3.5" />
+                <span>Sebelumnya</span>
+              </button>
+              <button
+                type="button"
+                disabled={!pagination.hasNextPage}
+                onClick={() => setPage((p) => p + 1)}
+                className="px-3 py-1.5 rounded-xl border border-[#CBD5E1] bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 font-semibold"
+              >
+                <span>Selanjutnya</span>
+                <ChevronRightIcon className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        ) : null
+      }
+      columns={[
+        {
+          key: 'agenda',
+          header: 'Agenda / Nomor Surat',
+          render: (item) => (
+            <>
+              <div className="font-mono font-bold text-slate-800 text-xs">{item.nomorAgenda}</div>
+              {item.nomorSurat ? (
+                <div className="text-[11px] font-mono text-surat-green mt-0.5">{item.nomorSurat}</div>
+              ) : (
+                <div className="text-[10px] text-slate-400 italic">Belum bernomor resmi</div>
+              )}
+            </>
+          ),
+        },
+        {
+          key: 'tipe',
+          header: 'Tipe & Jenis',
+          render: (item) => (
+            <>
+              <span
+                className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded uppercase mb-1 ${
+                  item.tipeSurat === 'masuk' ? 'bg-slate-100 text-slate-700' : 'bg-surat-green-50 text-surat-green'
+                }`}
+              >
+                {item.tipeSurat === 'masuk' ? 'Surat Masuk' : 'Surat Keluar'}
+              </span>
+              <div className="text-slate-600 font-medium truncate max-w-[140px]" title={item.jenisSurat?.nama}>
+                {item.jenisSurat?.nama || 'Surat'}
+              </div>
+            </>
+          ),
+        },
+        {
+          key: 'perihal',
+          header: 'Perihal / Keperluan',
+          cellClassName: 'max-w-xs',
+          render: (item) => (
+            <>
+              <div className="font-bold text-slate-900 line-clamp-1" title={item.perihal}>
+                {item.perihal}
+              </div>
+              {item.keperluan && (
+                <div className="text-[11px] text-slate-500 line-clamp-1 mt-0.5" title={item.keperluan}>
+                  {item.keperluan}
+                </div>
+              )}
+            </>
+          ),
+        },
+        {
+          key: 'pemohon',
+          header: 'Pemohon',
+          render: (item) => (
+            <>
+              <div className="font-bold text-slate-800">{item.pemohonNama}</div>
+              <div className="text-[11px] text-slate-400">
+                {item.pemohonProdi ? `${item.pemohonProdi}` : item.pemohonId || '-'}
+              </div>
+            </>
+          ),
+        },
+        {
+          key: 'createdAt',
+          header: 'Tanggal',
+          cellClassName: 'text-slate-500 whitespace-nowrap',
+          render: (item) =>
+            new Date(item.createdAt).toLocaleDateString('id-ID', {
+              day: 'numeric',
+              month: 'short',
+              year: 'numeric',
+            }),
+        },
+        {
+          key: 'status',
+          header: 'Status',
+          headerClassName: 'text-center',
+          cellClassName: 'text-center whitespace-nowrap',
+          render: (item) => getStatusBadge(item.status),
+        },
+        {
+          key: 'aksi',
+          header: 'Aksi',
+          headerClassName: 'text-right',
+          cellClassName: 'text-right whitespace-nowrap',
+          render: (item) => (
+            <div className="inline-flex items-center gap-1.5">
+              <Link
+                to={`/admin/surat/${item.id}`}
+                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-[#CBD5E1] bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs transition"
+                title="Detail & Disposisi"
+              >
+                <EyeIcon className="w-3.5 h-3.5 text-surat-green" />
+                <span>Detail</span>
+              </Link>
+              <Link
+                to={`/verifikasi/${item.qrCodeToken}`}
+                target="_blank"
+                className="p-1.5 rounded-lg border border-[#CBD5E1] bg-white hover:bg-slate-50 text-slate-500 hover:text-surat-green transition"
+                title="TTE & Verifikasi QR"
+              >
+                <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5" />
+              </Link>
+              {canDeleteSurat && (
+                <button
+                  type="button"
+                  onClick={() => handleDelete(item.id)}
+                  className="p-1.5 rounded-lg border border-[#CBD5E1] bg-white hover:bg-rose-50 text-slate-500 hover:text-rose-700 transition"
+                  title="Hapus Surat"
+                >
+                  <TrashIcon className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+          ),
+        },
+      ]}
+    />
   );
 };

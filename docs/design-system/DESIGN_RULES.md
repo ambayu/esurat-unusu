@@ -1,4 +1,4 @@
-# DESIGN RULES — E-SURAT UNUSU DESIGN SYSTEM
+# DESIGN RULES : E-SURAT UNUSU DESIGN SYSTEM
 
 Dokumen ini mendefinisikan prinsip estetika, visual hierarchy, elevasi, spacing, dan layout aturan form section pada aplikasi E-Surat UNUSU.
 

@@ -1,5 +1,8 @@
 import React from 'react';
-import { AlertCircle, RotateCw } from 'lucide-react';
+import {
+  ArrowPathIcon,
+  ExclamationCircleIcon,
+} from '@heroicons/react/24/outline';
 
 interface ErrorStateProps {
   title?: string;
@@ -15,7 +18,7 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
   return (
     <div className="py-12 px-4 text-center" role="alert">
       <div className="w-12 h-12 mx-auto rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mb-3">
-        <AlertCircle className="w-6 h-6" />
+        <ExclamationCircleIcon className="w-6 h-6" />
       </div>
       <h4 className="text-sm font-bold text-slate-800">{title}</h4>
       <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1">{description}</p>
@@ -26,7 +29,7 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
             onClick={onRetry}
             className="inline-flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition min-h-[44px]"
           >
-            <RotateCw className="w-3.5 h-3.5" />
+            <ArrowPathIcon className="w-3.5 h-3.5" />
             <span>Coba Lagi</span>
           </button>
         </div>

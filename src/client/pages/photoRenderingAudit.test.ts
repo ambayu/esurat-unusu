@@ -67,9 +67,13 @@ function runPhotoAndNavigationAudit() {
     'LandingPage memiliki fallback onError otomatis ke format SVG jika gambar PNG gagal dimuat'
   );
   assert(
-    landingCode.includes('width={1024}') && landingCode.includes('height={1024}') &&
-    landingCode.includes('width={640}') && landingCode.includes('height={360}'),
-    'LandingPage menyertakan dimensi width & height eksplisit pada background dan preview card'
+    // Prinsipnya: setiap <img> wajib punya width & height eksplisit agar tidak
+    // terjadi layout shift (CLS). Nilai pastinya mengikuti aset yang dipakai.
+    landingCode.includes('width={640}') && landingCode.includes('height={360}') &&
+    (landingCode.match(/<img[\s\S]*?\/>/g) || []).every(
+      (tag: string) => /width=\{?\d/.test(tag) && /height=\{?\d/.test(tag)
+    ),
+    'LandingPage menyertakan dimensi width & height eksplisit pada seluruh gambar'
   );
   assert(
     landingCode.includes('decoding="async"'),

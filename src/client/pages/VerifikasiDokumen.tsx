@@ -1,6 +1,13 @@
 import React, { useState } from 'react';
 import { verifySuratQr, SuratItem } from '../services/api';
-import { QrCode, CheckCircle2, XCircle, Search, ShieldCheck } from 'lucide-react';
+import {
+  CheckCircleIcon,
+  MagnifyingGlassIcon,
+  QrCodeIcon,
+  ShieldCheckIcon,
+  XCircleIcon,
+} from '@heroicons/react/24/outline';
+
 
 export const VerifikasiDokumen: React.FC = () => {
   const [token, setToken] = useState('');
@@ -27,8 +34,8 @@ export const VerifikasiDokumen: React.FC = () => {
   return (
     <div className="max-w-2xl mx-auto px-4 py-12 space-y-8">
       <div className="text-center space-y-2">
-        <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center mx-auto shadow-inner">
-          <QrCode className="w-7 h-7" />
+        <div className="w-14 h-14 rounded-2xl bg-surat-green-50 text-surat-green flex items-center justify-center mx-auto shadow-inner">
+          <QrCodeIcon className="w-7 h-7" />
         </div>
         <h1 className="text-2xl font-extrabold text-slate-900">Verifikasi Dokumen Resmi UNUSU</h1>
         <p className="text-xs text-slate-500 max-w-md mx-auto">
@@ -37,7 +44,7 @@ export const VerifikasiDokumen: React.FC = () => {
       </div>
 
       {/* Form Input Token */}
-      <form onSubmit={handleVerify} className="bg-white p-6 rounded-3xl border border-slate-200/90 shadow-2xs space-y-4">
+      <form onSubmit={handleVerify} className="bg-white p-6 rounded-3xl border border-slate-200/90 space-y-4">
         <div>
           <label className="text-xs font-bold text-slate-700 block mb-1">Kode / Token Verifikasi QR</label>
           <div className="relative">
@@ -47,16 +54,16 @@ export const VerifikasiDokumen: React.FC = () => {
               value={token}
               onChange={(e) => setToken(e.target.value)}
               placeholder="Contoh: UNUSU-VERIF-SKA-2026-FADHIL-884920"
-              className="w-full text-xs p-3.5 pr-10 rounded-xl border border-slate-200 focus:outline-emerald-600 font-mono"
+              className="w-full text-xs p-3.5 pr-10 rounded-xl border border-slate-200 focus:outline-surat-green font-mono"
             />
-            <Search className="w-4 h-4 absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+            <MagnifyingGlassIcon className="w-4 h-4 absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
           </div>
         </div>
 
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-3 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs shadow-md transition"
+          className="w-full py-3 rounded-xl bg-surat-green hover:bg-surat-green-dark text-white font-bold text-xs shadow-md transition"
         >
           {loading ? 'Memvalidasi...' : 'Periksa Keabsahan Naskah'}
         </button>
@@ -66,12 +73,12 @@ export const VerifikasiDokumen: React.FC = () => {
       {searched && (
         <div>
           {result ? (
-            <div className="bg-white rounded-3xl p-6 sm:p-8 border border-emerald-300 shadow-md space-y-4">
-              <div className="flex items-center space-x-3 text-emerald-800 bg-emerald-50 p-4 rounded-2xl">
-                <CheckCircle2 className="w-8 h-8 text-emerald-600 shrink-0" />
+            <div className="bg-white rounded-3xl p-6 sm:p-8 border border-surat-green-light shadow-md space-y-4">
+              <div className="flex items-center space-x-3 text-surat-green-dark bg-surat-green-50 p-4 rounded-2xl">
+                <CheckCircleIcon className="w-8 h-8 text-surat-green shrink-0" />
                 <div>
                   <h3 className="font-extrabold text-sm sm:text-base">DOKUMEN DINAS ASLI & TERVERIFIKASI</h3>
-                  <p className="text-xs text-emerald-700">Naskah resmi terdaftar dalam Sistem Informasi E-Surat Universitas Nahdlatul Ulama Sumatera Utara.</p>
+                  <p className="text-xs text-surat-green">Naskah resmi terdaftar dalam Sistem Informasi E-Surat Universitas Nahdlatul Ulama Sumatera Utara.</p>
                 </div>
               </div>
 
@@ -94,13 +101,13 @@ export const VerifikasiDokumen: React.FC = () => {
                 </div>
                 <div className="pt-2 flex justify-between">
                   <span className="text-slate-400">Pejabat Penandatangan:</span>
-                  <span className="font-bold text-emerald-700">{result.signedBy || '-'}</span>
+                  <span className="font-bold text-surat-green">{result.signedBy || '-'}</span>
                 </div>
               </div>
             </div>
           ) : (
             <div className="bg-white rounded-3xl p-6 border border-rose-200 shadow-sm text-center space-y-2">
-              <XCircle className="w-10 h-10 text-rose-500 mx-auto" />
+              <XCircleIcon className="w-10 h-10 text-rose-500 mx-auto" />
               <h3 className="font-bold text-sm text-slate-900">Dokumen Tidak Ditemukan</h3>
               <p className="text-xs text-slate-500">
                 Token yang Anda masukkan tidak terdaftar dalam pangkalan data arsip digital UNUSU. Pastikan kode diketik dengan benar.

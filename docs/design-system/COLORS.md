@@ -1,4 +1,4 @@
-# COLOR TOKENS — E-SURAT UNUSU
+# COLOR TOKENS : E-SURAT UNUSU
 
 Standar warna resmi aplikasi E-Surat UNUSU. Menggabungkan hijau kelembagaan UNUSU, aksen emas persuratan, dan palet netral slate profesional.
 

@@ -14,14 +14,43 @@ const layoutContent = fs.readFileSync(layoutPath, 'utf8');
 
 assert(!layoutContent.includes('user?.foto && !imgError'), 'User card/badge di atas menu utama sidebar harus sudah dihapus');
 assert(layoutContent.includes('>Halaman Depan<') || layoutContent.includes('title={isCollapsed ? \'Halaman Depan\' : undefined}'), 'Tautan Cepat dinamai Halaman Depan');
-assert(layoutContent.includes('to="/admin/rbac"'), 'Sidebar mendaftarkan menu Manajemen Pengguna & RBAC');
+assert(
+  layoutContent.includes("to: '/admin/pengguna'") &&
+  layoutContent.includes("to: '/admin/peran'") &&
+  layoutContent.includes("to: '/admin/izin'"),
+  'Sidebar mendaftarkan menu Manajemen Pengguna, Peran Sistem, dan Matriks Izin Akses pada grup Tata Kelola'
+);
+assert(
+  !layoutContent.includes("to: '/admin/peran-izin'"),
+  'Menu gabungan "Peran & Izin" sudah dipecah menjadi dua menu terpisah'
+);
+assert(
+  layoutContent.includes('Tata Kelola'),
+  'Menu manajemen pengguna berada di grup "Tata Kelola" (posisi paling bawah sidebar)'
+);
 
-// 2. Audit Tabel Surat: SuratList murni data table
+// 2. Audit Tabel Surat: SuratList memakai ListPageTemplate (tabel ada di template)
 const suratListPath = path.resolve(process.cwd(), 'src/client/pages/SuratList.tsx');
 assert(fs.existsSync(suratListPath), 'SuratList.tsx harus ada');
 const suratListContent = fs.readFileSync(suratListPath, 'utf8');
 
-assert(suratListContent.includes('<table') && suratListContent.includes('<thead>') && suratListContent.includes('<tbody>'), 'Tampilan surat menggunakan struktur data table');
+assert(
+  suratListContent.includes('ListPageTemplate') &&
+  suratListContent.includes('columns={['),
+  'Tampilan surat memakai ListPageTemplate dengan definisi kolom tabel'
+);
+
+// Struktur tabel baku diperiksa di komponen template-nya.
+const listTemplatePath = path.resolve(process.cwd(), 'src/client/components/ListPageTemplate.tsx');
+assert(fs.existsSync(listTemplatePath), 'ListPageTemplate.tsx harus ada');
+const listTemplateContent = fs.readFileSync(listTemplatePath, 'utf8');
+assert(
+  listTemplateContent.includes('<table') &&
+  /<thead[\s>]/.test(listTemplateContent) &&
+  /<tbody[\s>]/.test(listTemplateContent) &&
+  listTemplateContent.includes('overflow-x-auto'),
+  'ListPageTemplate menyediakan struktur data table dengan scroll horizontal'
+);
 assert(suratListContent.includes('canDeleteSurat'), 'Tombol aksi mematuhi gatekeeper permission');
 
 // 3. Audit RBAC API & UI

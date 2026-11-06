@@ -1,4 +1,4 @@
-# E-Surat UNUSU — Documentation Hub
+# E-Surat UNUSU : Documentation Hub
 
 Pusat dokumentasi arsitektur, aturan sistem tata naskah dinas, design system, dan tata kelola modul E-Surat UNUSU (Sistem Persuratan & Disposisi Digital Universitas Nahdlatul Ulama Sumatera Utara).
 

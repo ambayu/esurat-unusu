@@ -1,7 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchJenisSurat, createSurat, JenisSuratItem } from '../services/api';
-import { Send, FileText, ArrowLeft, CheckCircle2 } from 'lucide-react';
+import {
+  ArrowLeftIcon,
+  CheckCircleIcon,
+  DocumentTextIcon,
+  PaperAirplaneIcon,
+} from '@heroicons/react/24/outline';
+
 
 export const AjukanSurat: React.FC = () => {
   const navigate = useNavigate();
@@ -56,9 +62,9 @@ export const AjukanSurat: React.FC = () => {
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
         {/* Card Form */}
-        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-2xs space-y-6">
+        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 space-y-6">
         <div>
-          <span className="text-xs font-bold px-2.5 py-1 rounded bg-emerald-50 text-emerald-800">
+          <span className="text-xs font-bold px-2.5 py-1 rounded bg-surat-green-50 text-surat-green-dark">
             Formulir Online
           </span>
           <h1 className="text-2xl font-extrabold text-slate-900 mt-2">Pengajuan Surat Digital</h1>
@@ -73,7 +79,7 @@ export const AjukanSurat: React.FC = () => {
             <select
               value={jenisId}
               onChange={(e) => setJenisId(e.target.value)}
-              className="w-full text-xs p-3 rounded-xl border border-slate-200 focus:outline-emerald-600 bg-white"
+              className="w-full text-xs p-3 rounded-xl border border-slate-200 focus:outline-surat-green bg-white"
             >
               {jenisList.map((j) => (
                 <option key={j.id} value={j.id}>
@@ -92,7 +98,7 @@ export const AjukanSurat: React.FC = () => {
                 value={pemohonNama}
                 onChange={(e) => setPemohonNama(e.target.value)}
                 placeholder="Contoh: Muhammad Fadhil"
-                className="w-full text-xs p-3 rounded-xl border border-slate-200 focus:outline-emerald-600"
+                className="w-full text-xs p-3 rounded-xl border border-slate-200 focus:outline-surat-green"
               />
             </div>
             <div>
@@ -102,7 +108,7 @@ export const AjukanSurat: React.FC = () => {
                 value={pemohonId}
                 onChange={(e) => setPemohonId(e.target.value)}
                 placeholder="Contoh: 230101001"
-                className="w-full text-xs p-3 rounded-xl border border-slate-200 focus:outline-emerald-600"
+                className="w-full text-xs p-3 rounded-xl border border-slate-200 focus:outline-surat-green"
               />
             </div>
           </div>
@@ -112,7 +118,7 @@ export const AjukanSurat: React.FC = () => {
             <select
               value={pemohonProdi}
               onChange={(e) => setPemohonProdi(e.target.value)}
-              className="w-full text-xs p-3 rounded-xl border border-slate-200 focus:outline-emerald-600 bg-white"
+              className="w-full text-xs p-3 rounded-xl border border-slate-200 focus:outline-surat-green bg-white"
             >
               <option value="S1 Sistem Informasi">S1 Sistem Informasi</option>
               <option value="S1 Teknik Informatika">S1 Teknik Informatika</option>
@@ -131,7 +137,7 @@ export const AjukanSurat: React.FC = () => {
               value={perihal}
               onChange={(e) => setPerihal(e.target.value)}
               placeholder="Contoh: Permohonan Surat Keterangan Aktif Kuliah untuk Tunjangan Orang Tua"
-              className="w-full text-xs p-3 rounded-xl border border-slate-200 focus:outline-emerald-600"
+              className="w-full text-xs p-3 rounded-xl border border-slate-200 focus:outline-surat-green"
             />
           </div>
 
@@ -142,7 +148,7 @@ export const AjukanSurat: React.FC = () => {
               value={keperluan}
               onChange={(e) => setKeperluan(e.target.value)}
               placeholder="Tuliskan tujuan surat dan instansi tujuan bila diperlukan..."
-              className="w-full text-xs p-3 rounded-xl border border-slate-200 focus:outline-emerald-600"
+              className="w-full text-xs p-3 rounded-xl border border-slate-200 focus:outline-surat-green"
             />
           </div>
 
@@ -157,9 +163,9 @@ export const AjukanSurat: React.FC = () => {
             <button
               type="submit"
               disabled={loading}
-              className="inline-flex items-center px-6 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs shadow-md transition"
+              className="inline-flex items-center px-6 py-2.5 rounded-xl bg-surat-green hover:bg-surat-green-dark text-white font-bold text-xs shadow-md transition"
             >
-              <Send className="w-3.5 h-3.5 mr-1.5" />
+              <PaperAirplaneIcon className="w-3.5 h-3.5 mr-1.5" />
               <span>{loading ? 'Mengirim...' : 'Kirim Permohonan'}</span>
             </button>
           </div>

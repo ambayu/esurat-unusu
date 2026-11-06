@@ -6,7 +6,8 @@
  * Verifikasi:
  * 1. AdminLayout:
  *    - Validasi struktur sidebar navigation: Brand header, profil pengguna, menu links, quick links, logout action.
- *    - Menu items: Dashboard, Surat Masuk, Surat Keluar, Semua Agenda Surat, Verifikasi Dokumen QR.
+ *    - Menu items: Dashboard, Surat Masuk, Surat Keluar, Semua Agenda Surat.
+ *      (Menu Verifikasi Dokumen QR dihapus dari sidebar; halaman publik `/verifikasi` tetap ada.)
  *    - Standar tap target WCAG AA (min-h-[44px]) pada elemen interaktif tombol/link.
  *    - Kontainer responsif: Mobile drawer toggle dengan overlay backdrop dan tombol penutup.
  * 2. AdminDashboard:
@@ -54,9 +55,16 @@ assert(
   adminLayoutContent.includes("to: '/admin'") &&
   (adminLayoutContent.includes("to: '/admin/surat?tipe=masuk'") || adminLayoutContent.includes("to: '/surat?tipe=masuk'")) &&
   (adminLayoutContent.includes("to: '/admin/surat?tipe=keluar'") || adminLayoutContent.includes("to: '/surat?tipe=keluar'")) &&
-  (adminLayoutContent.includes("to: '/admin/surat'") || adminLayoutContent.includes("to: '/surat'")) &&
-  adminLayoutContent.includes("to: '/verifikasi'"),
-  "AdminLayout memiliki daftar menu persuratan lengkap (Dashboard, Surat Masuk, Surat Keluar, Agenda, Verifikasi)"
+  (adminLayoutContent.includes("to: '/admin/surat'") || adminLayoutContent.includes("to: '/surat'")),
+  "AdminLayout memiliki daftar menu persuratan lengkap (Dashboard, Surat Masuk, Surat Keluar, Agenda)"
+);
+
+// Menu Verifikasi Dokumen QR sengaja dihapus dari sidebar admin panel.
+// Halaman publik /verifikasi tetap hidup dan tetap dapat diakses lewat URL langsung.
+assert(
+  !adminLayoutContent.includes("to: '/verifikasi'") &&
+  !adminLayoutContent.includes("label: 'Verifikasi Dokumen QR'"),
+  "Sidebar admin TIDAK lagi memuat menu Verifikasi Dokumen QR"
 );
 
 assert(
@@ -67,7 +75,7 @@ assert(
 assert(
   adminLayoutContent.includes("sidebarOpen") &&
   adminLayoutContent.includes("md:hidden") &&
-  adminLayoutContent.includes("X className"),
+  adminLayoutContent.includes("XMarkIcon className"),
   "AdminLayout mendukung layout responsif mobile drawer dengan tombol close dan toggle"
 );
 
@@ -93,12 +101,16 @@ assert(
 );
 
 assert(
-  adminDashboardContent.includes("Distribusi Status Seluruh Surat") &&
+  // Dashboard kini menyajikan sebaran status surat sebagai donut chart
+  // (laporan grafik), bukan lagi grid kartu seperti versi sebelumnya.
+  adminDashboardContent.includes("Laporan Alur Status Surat") &&
+  adminDashboardContent.includes("DonutChart") &&
+  adminDashboardContent.includes("stats.surat.pending") &&
   adminDashboardContent.includes("stats.surat.diproses") &&
   adminDashboardContent.includes("stats.surat.disetujui") &&
   adminDashboardContent.includes("stats.surat.selesai") &&
   adminDashboardContent.includes("stats.surat.ditolak"),
-  "AdminDashboard menyajikan grid sebaran status surat (Diajukan, Diproses, Disetujui, Selesai, Ditolak)"
+  "AdminDashboard menyajikan laporan grafik sebaran status surat (Diajukan, Diproses, Disetujui, Selesai, Ditolak)"
 );
 
 assert(
