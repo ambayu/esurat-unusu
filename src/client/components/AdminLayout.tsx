@@ -22,6 +22,8 @@ import {
   UserIcon,
   UsersIcon,
   XMarkIcon,
+  GlobeAltIcon,
+  IdentificationIcon,
 } from '@heroicons/react/24/outline';
 
 export const AdminLayout: React.FC = () => {
@@ -539,8 +541,8 @@ export const AdminLayout: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
-                className="flex items-center gap-2.5 p-1.5 pr-3 rounded-full border border-[#CBD5E1] bg-white hover:bg-slate-50 transition-colors cursor-pointer min-h-[44px]"
-                aria-label="Bars3Icon profil pengguna"
+                className="flex items-center gap-2.5 px-3 py-1.5 min-h-[44px] border-x border-[#CBD5E1] bg-transparent hover:bg-slate-50 transition-colors cursor-pointer focus:outline-none"
+                aria-label="Profil pengguna"
               >
                 <div className="w-8 h-8 rounded-full bg-surat-green text-white flex items-center justify-center font-bold text-xs ring-1 ring-surat-green">
                   {user?.nama ? user.nama.charAt(0).toUpperCase() : 'A'}
@@ -551,12 +553,14 @@ export const AdminLayout: React.FC = () => {
                   </div>
                   <div className="text-[10px] text-surat-green font-semibold">{user?.role || 'Staff Biro'}</div>
                 </div>
-                <ChevronDownIcon className="w-3.5 h-3.5 text-slate-400" />
+                <ChevronDownIcon className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${profileDropdownOpen ? 'rotate-180' : ''}`} />
               </button>
 
               {/* Profile Dropdown Popup */}
               {profileDropdownOpen && (
                 <div
+                  role="menu"
+                  aria-label="Menu akun panel E-Surat"
                   className="absolute right-0 mt-2 w-56 rounded-[14px] bg-white shadow-md border border-[#CBD5E1] py-1.5 z-50 text-xs"
                   onMouseLeave={() => setProfileDropdownOpen(false)}
                 >
@@ -567,33 +571,37 @@ export const AdminLayout: React.FC = () => {
                       {user?.role || 'Admin'}
                     </span>
                   </div>
-                  <Link
-                    to="/"
-                    onClick={() => setProfileDropdownOpen(false)}
-                    className="flex items-center gap-2 px-4 py-2 text-slate-700 hover:bg-surat-green-50 hover:text-surat-green-dark transition-colors min-h-[40px]"
-                  >
-                    <HomeIcon className="w-4 h-4 text-slate-400" />
-                    <span>Halaman Depan Publik</span>
-                  </Link>
-                  <Link
-                    to="/admin/surat"
-                    onClick={() => setProfileDropdownOpen(false)}
-                    className="flex items-center gap-2 px-4 py-2 text-slate-700 hover:bg-surat-green-50 hover:text-surat-green-dark transition-colors min-h-[40px]"
-                  >
-                    <DocumentTextIcon className="w-4 h-4 text-slate-400" />
-                    <span>Agenda Persuratan</span>
-                  </Link>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setProfileDropdownOpen(false);
-                      handleLogout();
-                    }}
-                    className="w-full flex items-center gap-2 px-4 py-2 text-rose-700 hover:bg-rose-50 transition-colors text-left font-semibold cursor-pointer border-t border-slate-100 min-h-[40px]"
-                  >
-                    <ArrowLeftOnRectangleIcon className="w-4 h-4" />
-                    <span>Keluar Sesi</span>
-                  </button>
+                  <div className="py-1">
+                    <Link
+                      to="/"
+                      onClick={() => setProfileDropdownOpen(false)}
+                      className="flex items-center gap-2.5 px-4 py-2 text-slate-700 hover:bg-surat-green-50 hover:text-surat-green-dark transition-colors font-medium min-h-[40px]"
+                    >
+                      <GlobeAltIcon className="w-4 h-4 text-surat-green" />
+                      <span>Halaman Depan</span>
+                    </Link>
+                    <Link
+                      to="/admin/profil"
+                      onClick={() => setProfileDropdownOpen(false)}
+                      className="flex items-center gap-2.5 px-4 py-2 text-slate-700 hover:bg-surat-green-50 hover:text-surat-green-dark transition-colors font-medium min-h-[40px]"
+                    >
+                      <IdentificationIcon className="w-4 h-4 text-surat-green" />
+                      <span>Biodata Saya</span>
+                    </Link>
+                  </div>
+                  <div className="pt-1 border-t border-slate-100">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setProfileDropdownOpen(false);
+                        handleLogout();
+                      }}
+                      className="w-full flex items-center gap-2.5 px-4 py-2 text-rose-700 hover:bg-rose-50 transition-colors text-left font-semibold cursor-pointer min-h-[40px]"
+                    >
+                      <ArrowLeftOnRectangleIcon className="w-4 h-4 text-rose-700" />
+                      <span>Keluar dari Akun</span>
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
