@@ -55,6 +55,10 @@ Dokumen ini berisi aturan global mutlak yang berlaku di seluruh modul, halaman, 
 
 ## 5. Aturan Keamanan & Kode
 
-1. **Role-Based Access Control (RBAC)**: Mutasi data sensitif (persetujuan surat, penomoran resmi, perubahan hak akses RBAC) wajib dilindungi di sisi client dan server.
+1. **Permission-Based Access Control (PBAC)**:
+   - Akses masuk ditentukan oleh izin masuk SSO (`esurat-unusu:masuk_admin`, `esurat-unusu:masuk_dosen`, `esurat-unusu:masuk_mahasiswa`) yang diverifikasi pada `POST /api/auth/sso`.
+   - Dilarang mengandalkan pengecekan nama peran mentah (`role === 'ADMIN_ESURAT'`). Peran admin aplikasi kaku telah dihapus dari portal pusat.
+   - SUPERADMIN memiliki izin masuk secara global ke seluruh aplikasi cabang. Super Administrator menautkan peran dan izin di portal SSO.
+   - Mutasi data sensitif (persetujuan surat, penomoran resmi, disposisi) wajib diverifikasi berdasarkan hak izin di sisi server.
 2. **Secret Safety**: Jangan mengekspos kunci enkripsi, token JWT, file `.env`, atau data sensitif ke log client.
 3. **Resilient Data Grids**: Seluruh tabel persuratan wajib aman terhadap nilai `null` atau `undefined` (`surat?.perihal`, `surat?.pengirim`).
