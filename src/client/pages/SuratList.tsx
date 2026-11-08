@@ -193,11 +193,11 @@ export const SuratList: React.FC = () => {
             Keluar
           </button>
 
-          {/* FunnelIcon status */}
+          {/* Filter status */}
           <select
             value={statusFilter}
             onChange={(e) => handleStatusChange(e.target.value)}
-            aria-label="FunnelIcon status surat"
+            aria-label="Filter status surat"
             className="text-xs py-2 px-3 rounded-xl border border-[#CBD5E1] bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/20 font-semibold text-slate-700 min-h-[44px]"
           >
             <option value="all">Semua Status</option>

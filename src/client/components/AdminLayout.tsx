@@ -142,7 +142,7 @@ export const AdminLayout: React.FC = () => {
   };
 
   /**
-   * Bars3Icon "Tata Kelola" (Manajemen Pengguna, Peran & Izin, Profil) dipisah dan
+   * Menu "Tata Kelola" (Manajemen Pengguna, Peran & Izin, Profil) dipisah dan
    * selalu dirender PALING BAWAH karena mengatur akses, bukan pekerjaan
    * persuratan harian.
    */
@@ -248,15 +248,15 @@ export const AdminLayout: React.FC = () => {
           </button>
         </div>
 
-        {/* Bars3Icon Navigation */}
+        {/* Menu Navigation */}
         <div className="flex-1 px-3 py-2 space-y-4 overflow-y-auto">
           <div>
             {!isCollapsed && (
               <p className="px-3 pb-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
-                Bars3Icon Utama
+                Menu Utama
               </p>
             )}
-            <nav className="space-y-1" role="navigation" aria-label="Bars3Icon utama panel persuratan">
+            <nav className="space-y-1" role="navigation" aria-label="Menu utama panel persuratan">
               {primaryItems.map((item) => {
                 const Icon = item.icon;
                 const active = isItemActive(item.to, item.end);
@@ -314,7 +314,7 @@ export const AdminLayout: React.FC = () => {
                   Tata Kelola
                 </p>
               )}
-              <nav className="space-y-1" role="navigation" aria-label="Bars3Icon tata kelola dan hak akses">
+              <nav className="space-y-1" role="navigation" aria-label="Menu tata kelola dan hak akses">
                 {governanceItems.map((item) => {
                   const Icon = item.icon;
                   const active = isItemActive(item.to, item.end);
@@ -474,7 +474,7 @@ export const AdminLayout: React.FC = () => {
 
       {/* Mobile Sidebar Overlay Drawer */}
       {sidebarOpen && (
-        <div className="fixed inset-0 z-50 md:hidden flex" role="dialog" aria-modal="true" aria-label="Bars3Icon navigasi">
+        <div className="fixed inset-0 z-50 md:hidden flex" role="dialog" aria-modal="true" aria-label="Menu navigasi">
           <div
             className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs"
             onClick={() => setSidebarOpen(false)}

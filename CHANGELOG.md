@@ -1,5 +1,11 @@
 # CHANGELOG : E-SURAT UNUSU
 
+## [2026-11-08] : Pembersihan Label Navigasi & Filter Status
+
+### Fixed
+- **Label Navigasi Sidebar** (`src/client/components/AdminLayout.tsx`): Memperbaiki teks label seksi menu sidebar yang sebelumnya tertulis `Bars3Icon Utama` menjadi `Menu Utama`. Seluruh atribut aksesibilitas `aria-label` yang terdampak artefak tokenisasi ikon (`Bars3Icon utama panel persuratan`, `Bars3Icon tata kelola dan hak akses`, `Bars3Icon navigasi`) dinormalisasi kembali menjadi teks semantik `Menu ...`.
+- **Label Aksesibilitas Filter** (`src/client/pages/SuratList.tsx`): Memperbaiki `aria-label` pada elemen select status surat dari `FunnelIcon status surat` menjadi `Filter status surat`.
+
 ## [2026-11-07] : Penyeragaman Visual & Migrasi Ikon Heroicons
 
 ### Changed
