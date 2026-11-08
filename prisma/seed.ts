@@ -330,7 +330,7 @@ async function main() {
   }
 
   // 8. Seed Default Admin User & Relasi UserRole
-  const adminUser = await prisma.user.upsert({
+  const adminTu = await prisma.user.upsert({
     where: { username: "admin_tu" },
     update: {
       nama: "Administrator Tata Usaha",
@@ -345,17 +345,65 @@ async function main() {
     },
   });
 
+  const superadminUser = await prisma.user.upsert({
+    where: { username: "admin" },
+    update: {
+      nama: "Super Administrator E-Surat",
+      email: "admin@unusu.ac.id",
+      isActive: true,
+    },
+    create: {
+      username: "admin",
+      nama: "Super Administrator E-Surat",
+      email: "admin@unusu.ac.id",
+      isActive: true,
+    },
+  });
+
+  const dosenSample = await prisma.user.upsert({
+    where: { username: "0102038901" },
+    update: {
+      nama: "Dr. Muhammad Farhan, M.Kom.",
+      email: "farhan@unusu.ac.id",
+      nidn: "0102038901",
+      isActive: true,
+    },
+    create: {
+      username: "0102038901",
+      nama: "Dr. Muhammad Farhan, M.Kom.",
+      email: "farhan@unusu.ac.id",
+      nidn: "0102038901",
+      isActive: true,
+    },
+  });
+
+  for (const u of [adminTu, superadminUser]) {
+    await prisma.userRole.upsert({
+      where: {
+        userId_roleId: {
+          userId: u.id,
+          roleId: adminRole.id,
+        },
+      },
+      update: {},
+      create: {
+        userId: u.id,
+        roleId: adminRole.id,
+      },
+    });
+  }
+
   await prisma.userRole.upsert({
     where: {
       userId_roleId: {
-        userId: adminUser.id,
-        roleId: adminRole.id,
+        userId: dosenSample.id,
+        roleId: dosenRole.id,
       },
     },
     update: {},
     create: {
-      userId: adminUser.id,
-      roleId: adminRole.id,
+      userId: dosenSample.id,
+      roleId: dosenRole.id,
     },
   });
 

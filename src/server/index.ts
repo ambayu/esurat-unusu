@@ -185,12 +185,79 @@ app.post("/api/auth/sso", async (req: Request, res: Response) => {
       });
     }
 
+    // Ambil/Buat record pengguna lokal di tabel users E-Surat
+    let localUser = await db.user.findFirst({
+      where: {
+        OR: [
+          { username: ssoUser.username },
+          ...(ssoUser.email ? [{ email: ssoUser.email }] : []),
+        ],
+      },
+      include: {
+        userRoles: {
+          include: { role: true },
+        },
+      },
+    });
+
+    const ssoRoles = Array.isArray((ssoUser as any).roles)
+      ? (ssoUser as any).roles
+      : ssoUser.role
+      ? [ssoUser.role]
+      : [];
+
+    if (!localUser) {
+      // Auto-provisioning akun lokal di E-Surat
+      let defaultRoleCode = "dosen";
+      if (ssoRoles.includes("SUPERADMIN") || ssoRoles.includes("ADMIN_ESURAT")) {
+        defaultRoleCode = "admin";
+      } else if (ssoRoles.includes("MAHASISWA")) {
+        defaultRoleCode = "mahasiswa";
+      }
+
+      const roleDb = await db.role.findFirst({
+        where: {
+          OR: [{ code: defaultRoleCode }, { code: defaultRoleCode.toUpperCase() }],
+        },
+      });
+
+      localUser = await db.user.create({
+        data: {
+          username: ssoUser.username,
+          nama: ssoUser.nama,
+          email: ssoUser.email || null,
+          nim: ssoUser.nim || null,
+          nidn: ssoUser.nidn || null,
+          prodi: ssoUser.prodi || null,
+          fakultas: ssoUser.fakultas || null,
+          isActive: true,
+          ...(roleDb
+            ? {
+                userRoles: {
+                  create: [{ roleId: roleDb.id }],
+                },
+              }
+            : {}),
+        },
+        include: {
+          userRoles: {
+            include: { role: true },
+          },
+        },
+      });
+    }
+
+    const localRoleCodes = localUser.userRoles?.map((ur: any) => ur.role.code.toLowerCase()) || [];
+    const primaryRole = localRoleCodes.includes("admin")
+      ? "admin"
+      : localRoleCodes[0] || mapSsoRole(ssoUser.role);
+
     const sessionUser: SsoSession = {
-      id: ssoUser.id,
+      id: localUser.id,
       username: ssoUser.username,
       nama: ssoUser.nama,
       email: ssoUser.email ?? null,
-      role: mapSsoRole(ssoUser.role),
+      role: primaryRole,
       ssoRole: ssoUser.role,
       nim: ssoUser.nim ?? null,
       nidn: ssoUser.nidn ?? null,
@@ -198,12 +265,23 @@ app.post("/api/auth/sso", async (req: Request, res: Response) => {
       fakultas: ssoUser.fakultas ?? null,
     };
 
-    const tokenJwt = jwt.sign(sessionUser, JWT_SECRET, { expiresIn: "7d" });
+    const userPermissions = await getUserPermissionKeys(localUser.id, primaryRole);
 
-    // Tambahkan list permissions ke payload response agar frontend dapat melakukan conditional rendering
-    const userPermissions = await getUserPermissionKeys(ssoUser.id, sessionUser.role);
+    const tokenJwt = jwt.sign(
+      {
+        ...sessionUser,
+        roles: localRoleCodes,
+        permissions: userPermissions,
+      },
+      JWT_SECRET,
+      { expiresIn: "7d" }
+    );
 
-    res.json({ success: true, token: tokenJwt, user: { ...sessionUser, permissions: userPermissions } });
+    res.json({
+      success: true,
+      token: tokenJwt,
+      user: { ...sessionUser, roles: localRoleCodes, permissions: userPermissions },
+    });
   } catch (error: any) {
     res.status(500).json({ success: false, message: "Gagal memproses SSO: " + error?.message });
   }
