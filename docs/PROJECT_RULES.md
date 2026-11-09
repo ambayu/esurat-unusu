@@ -51,12 +51,19 @@ Dokumen ini berisi aturan global mutlak yang berlaku di seluruh modul, halaman, 
    - Lampiran naskah dinas diakses melalui resolver URL aman `getAssetUrl()` untuk mendukung sub-path reverse proxy.
    - Fallback rendering wajib disediakan jika preview dokumen tidak tersedia.
 
+5. **Pembedaan URL Callback (Local Dev vs VPS)**:
+   - Lingkungan lokal: `http://localhost:5175/sso/callback`.
+   - Lingkungan VPS / Produksi: `https://unusu.ac.id/esurat/sso/callback` (atau sesuai konfigurasi reverse proxy).
+   - Diatur terpusat di seeder portal ONE UNUSU melalui `npm run db:sso-dev-urls` / `npm run db:sso-vps-urls`.
+
 ---
 
 ## 5. Aturan Keamanan & Kode
 
-1. **Permission-Based Access Control (PBAC)**:
-   - Akses masuk ditentukan oleh izin masuk SSO (`esurat-unusu:masuk_admin`, `esurat-unusu:masuk_dosen`, `esurat-unusu:masuk_mahasiswa`) yang diverifikasi pada `POST /api/auth/sso`.
+1. **Permission-Based Access Control (PBAC) & Desentralisasi**:
+   - E-Surat UNUSU mengelola otorisasi lokal mandiri melalui relasi `users`, `roles`, `permissions`, `role_permissions`, dan `user_roles`.
+   - Endpoint `POST /api/auth/sso` memvalidasi izin masuk SSO, kemudian secara otomatis memetakan/mendaftarkan akun pengguna ke tabel lokal `users` dan `user_roles` (auto-provisioning).
+   - Token JWT sesi lokal diterbitkan dengan menyertakan permissions lokal hasil resolusi database internal E-Surat.
    - Dilarang mengandalkan pengecekan nama peran mentah (`role === 'ADMIN_ESURAT'`). Peran admin aplikasi kaku telah dihapus dari portal pusat.
    - SUPERADMIN memiliki izin masuk secara global ke seluruh aplikasi cabang. Super Administrator menautkan peran dan izin di portal SSO.
    - Mutasi data sensitif (persetujuan surat, penomoran resmi, disposisi) wajib diverifikasi berdasarkan hak izin di sisi server.
