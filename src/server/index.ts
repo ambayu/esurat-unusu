@@ -1149,24 +1149,50 @@ app.post("/api/admin/users", requireRole("admin"), async (req: Request, res: Res
 app.put("/api/admin/users/:id", requireRole("admin"), async (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id, 10);
-    const { nama, email, nim, nidn, prodi, fakultas, isActive, roleIds } = req.body;
+    const { isActive, roleIds } = req.body;
+
+    const existingUser = await db.user.findUnique({
+      where: { id },
+      include: { userRoles: { include: { role: true } } },
+    });
+
+    if (!existingUser) {
+      return res.status(404).json({ success: false, message: "Pengguna tidak ditemukan" });
+    }
+
+    const isTargetSuperadmin =
+      existingUser.userRoles.some((ur: any) => ur.role.code === "SUPERADMIN") ||
+      existingUser.username.toLowerCase() === "superadmin" ||
+      existingUser.username.toLowerCase() === "admin";
+
+    // Guard: Super Administrator tidak boleh dinonaktifkan
+    if (isTargetSuperadmin && typeof isActive === "boolean" && !isActive) {
+      return res.status(403).json({
+        success: false,
+        message: "Akun Super Administrator tidak dapat dinonaktifkan demi integritas sistem.",
+      });
+    }
 
     const updated = await db.user.update({
       where: { id },
       data: {
-        ...(nama && { nama: String(nama).trim() }),
-        ...(email !== undefined && { email: email ? String(email).trim() : null }),
-        ...(nim !== undefined && { nim: nim ? String(nim).trim() : null }),
-        ...(nidn !== undefined && { nidn: nidn ? String(nidn).trim() : null }),
-        ...(prodi !== undefined && { prodi: prodi ? String(prodi).trim() : null }),
-        ...(fakultas !== undefined && { fakultas: fakultas ? String(fakultas).trim() : null }),
         ...(typeof isActive === 'boolean' && { isActive }),
       }
     });
 
     if (Array.isArray(roleIds)) {
+      let finalRoleIds = [...roleIds].map((r: any) => Number(r));
+
+      // Guard: Role SUPERADMIN tidak boleh dilepas jika user adalah superadmin
+      if (isTargetSuperadmin) {
+        const superRole = await db.role.findFirst({ where: { code: "SUPERADMIN" } });
+        if (superRole && !finalRoleIds.includes(superRole.id)) {
+          finalRoleIds.push(superRole.id);
+        }
+      }
+
       await db.userRole.deleteMany({ where: { userId: id } });
-      for (const rId of roleIds) {
+      for (const rId of finalRoleIds) {
         await db.userRole.create({
           data: {
             userId: id,
