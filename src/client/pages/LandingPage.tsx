@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { getAssetUrl } from '../services/api';
+import { getAssetUrl, fetchPublicSliders, EsuratBannerSliderItem } from '../services/api';
 import { LatarDekoratif } from '../components/LatarDekoratif';
 import { Reveal } from '../components/Reveal';
 import {
@@ -125,10 +125,35 @@ export const LandingPage: React.FC = () => {
   const { user } = useAuth();
   const [activeSlide, setActiveSlide] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const [slides, setSlides] = useState<SlideItem[]>(HERO_SLIDES);
   const touchStartXRef = useRef<number | null>(null);
   const touchEndXRef = useRef<number | null>(null);
 
-  const totalSlides = HERO_SLIDES.length;
+  useEffect(() => {
+    fetchPublicSliders()
+      .then((res) => {
+        if (res.data.success && res.data.data.length > 0) {
+          const mapped: SlideItem[] = res.data.data.map((item) => ({
+            id: `custom-slider-${item.id}`,
+            keterangan: 'Layanan Resmi E-Surat',
+            titlePrefix: item.judul + ' ',
+            titleHighlight: '',
+            description: item.subjudul || 'Sistem Persuratan & Disposisi Digital Universitas Nahdlatul Ulama Sumatera Utara.',
+            primaryCtaText: 'Masuk Portal Sivitas',
+            primaryCtaLink: item.linkUrl || '/login',
+            primaryCtaIcon: ArrowRightOnRectangleIcon,
+            imageSrc: item.gambarUrl,
+            imageAlt: item.judul,
+          }));
+          setSlides(mapped);
+        }
+      })
+      .catch(() => {
+        // Fallback memakai HERO_SLIDES default bawaan
+      });
+  }, []);
+
+  const totalSlides = slides.length;
 
   const nextSlide = useCallback(() => {
     setActiveSlide((prev) => (prev + 1) % totalSlides);
@@ -172,7 +197,7 @@ export const LandingPage: React.FC = () => {
     return () => clearInterval(timer);
   }, [isPaused, nextSlide]);
 
-  const current = HERO_SLIDES[activeSlide];
+  const current = slides[activeSlide] || slides[0] || HERO_SLIDES[0];
   const PrimaryIcon = current.primaryCtaIcon;
 
   return (
@@ -213,7 +238,7 @@ export const LandingPage: React.FC = () => {
       >
         {/* Latar gambar tiap slide, berganti dengan transisi opasitas. */}
         <div className="absolute inset-0 z-0 w-full h-full overflow-hidden">
-          {HERO_SLIDES.map((slide, index) => (
+          {slides.map((slide, index) => (
             <div
               key={slide.id}
               className={`absolute inset-0 w-full h-full transition-opacity duration-1000 ease-in-out ${
@@ -221,7 +246,7 @@ export const LandingPage: React.FC = () => {
               }`}
             >
               <img
-                src={getAssetUrl(slide.imageSrc)}
+                src={slide.imageSrc.startsWith('data:') ? slide.imageSrc : getAssetUrl(slide.imageSrc)}
                 alt={slide.imageAlt}
                 width={640}
                 height={360}
@@ -291,7 +316,7 @@ export const LandingPage: React.FC = () => {
 
             <div className="flex items-center justify-between gap-4 shrink-0 lg:flex-col lg:items-end lg:gap-3">
               <div className="flex items-center gap-2">
-                {HERO_SLIDES.map((slide, idx) => (
+                {slides.map((slide, idx) => (
                   <button
                     key={slide.id}
                     type="button"

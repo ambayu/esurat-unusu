@@ -17,6 +17,7 @@ import { ManajemenPengguna } from './pages/ManajemenPengguna';
 import { Peran } from './pages/Peran';
 import { Izin } from './pages/Izin';
 import { Profil } from './pages/Profil';
+import { ManajemenSliderEsurat } from './pages/ManajemenSliderEsurat';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
 interface ProtectedRouteProps {
@@ -92,6 +93,7 @@ function AppContent() {
             <Route path="jenis-surat" element={<JenisSuratManagement />} />
             <Route path="jenis-surat/tambah" element={<JenisSuratFormPage />} />
             <Route path="jenis-surat/edit/:id" element={<JenisSuratFormPage />} />
+            <Route path="slider" element={<ManajemenSliderEsurat />} />
             <Route path="surat-form" element={<AdminSuratForm />} />
             {/* Menu grup Tata Kelola: Pengguna → Peran → Izin (masing-masing menu mandiri) */}
             <Route path="pengguna" element={<ManajemenPengguna />} />

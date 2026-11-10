@@ -24,6 +24,7 @@ import {
   XMarkIcon,
   GlobeAltIcon,
   IdentificationIcon,
+  PhotoIcon,
 } from '@heroicons/react/24/outline';
 
 export const AdminLayout: React.FC = () => {
@@ -80,6 +81,12 @@ export const AdminLayout: React.FC = () => {
       description: 'Pola format nomor & template',
     },
     {
+      to: '/admin/slider',
+      label: 'Slider Hero E-Surat',
+      icon: PhotoIcon,
+      description: 'Banner beranda publik',
+    },
+    {
       to: '/admin/surat-form?tipe=masuk',
       label: 'Registrasi Surat Masuk',
       icon: InboxIcon,
@@ -123,6 +130,7 @@ export const AdminLayout: React.FC = () => {
     if (pathname.startsWith('/admin/izin')) return 'Izin';
     if (pathname.startsWith('/admin/profil')) return 'Profil';
     if (pathname === '/admin/jenis-surat') return 'Jenis Surat & Template';
+    if (pathname === '/admin/slider') return 'Manajemen Slider Hero E-Surat';
     if (pathname.startsWith('/admin/surat-form')) return 'Form Registrasi Surat';
     if (pathname.startsWith('/admin/rbac')) return 'Manajemen Pengguna & RBAC';
     if (pathname.startsWith('/admin/surat') || pathname.startsWith('/surat')) return 'Agenda Persuratan';

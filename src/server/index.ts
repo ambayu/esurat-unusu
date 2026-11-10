@@ -1218,6 +1218,110 @@ app.delete("/api/admin/users/:id", requireRole("admin"), async (req: Request, re
   }
 });
 
+// ===========================================================================
+// BANNER SLIDER HERO (E-SURAT UNUSU)
+// ===========================================================================
+
+// GET /api/sliders (Daftar slider hero aktif untuk halaman publik E-Surat)
+app.get("/api/sliders", async (req: Request, res: Response) => {
+  try {
+    const sliders = await db.esuratBannerSlider.findMany({
+      where: { active: true },
+      orderBy: [{ urutan: "asc" }, { createdAt: "desc" }],
+    });
+    res.json({ success: true, data: sliders });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Gagal mengambil foto slider hero E-Surat." });
+  }
+});
+
+// GET /api/admin/sliders (Seluruh foto slider hero termasuk non-aktif)
+app.get("/api/admin/sliders", async (req: Request, res: Response) => {
+  try {
+    const sliders = await db.esuratBannerSlider.findMany({
+      orderBy: [{ urutan: "asc" }, { createdAt: "desc" }],
+    });
+    res.json({ success: true, data: sliders });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Gagal mengambil daftar slider admin E-Surat." });
+  }
+});
+
+// POST /api/admin/sliders (Tambah foto slider hero baru dengan upload langsung)
+app.post("/api/admin/sliders", async (req: Request, res: Response) => {
+  try {
+    const { judul, subjudul, gambarUrl, gambarMobileUrl, linkUrl, urutan, active } = req.body;
+
+    if (!judul || typeof judul !== "string" || !judul.trim()) {
+      return res.status(400).json({ success: false, message: "Judul slider wajib diisi." });
+    }
+    if (!gambarUrl || typeof gambarUrl !== "string" || !gambarUrl.trim()) {
+      return res.status(400).json({ success: false, message: "File foto slider desktop wajib diunggah." });
+    }
+
+    const created = await db.esuratBannerSlider.create({
+      data: {
+        judul: judul.trim(),
+        subjudul: subjudul && typeof subjudul === "string" ? subjudul.trim() : null,
+        gambarUrl: gambarUrl.trim(),
+        gambarMobileUrl: gambarMobileUrl && typeof gambarMobileUrl === "string" ? gambarMobileUrl.trim() : null,
+        linkUrl: linkUrl && typeof linkUrl === "string" ? linkUrl.trim() : null,
+        urutan: Number.isInteger(Number(urutan)) ? Number(urutan) : 0,
+        active: active === undefined ? true : Boolean(active),
+      },
+    });
+
+    res.status(201).json({ success: true, message: "Foto slider hero E-Surat berhasil ditambahkan.", data: created });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Gagal menyimpan foto slider E-Surat." });
+  }
+});
+
+// PUT /api/admin/sliders/:id (Update foto slider hero)
+app.put("/api/admin/sliders/:id", async (req: Request, res: Response) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) {
+      return res.status(400).json({ success: false, message: "ID slider tidak valid." });
+    }
+
+    const { judul, subjudul, gambarUrl, gambarMobileUrl, linkUrl, urutan, active } = req.body;
+
+    const data: Record<string, unknown> = {};
+    if (judul !== undefined) data.judul = String(judul).trim();
+    if (subjudul !== undefined) data.subjudul = subjudul ? String(subjudul).trim() : null;
+    if (gambarUrl !== undefined) data.gambarUrl = String(gambarUrl).trim();
+    if (gambarMobileUrl !== undefined) data.gambarMobileUrl = gambarMobileUrl ? String(gambarMobileUrl).trim() : null;
+    if (linkUrl !== undefined) data.linkUrl = linkUrl ? String(linkUrl).trim() : null;
+    if (urutan !== undefined) data.urutan = Number(urutan) || 0;
+    if (active !== undefined) data.active = Boolean(active);
+
+    const updated = await db.esuratBannerSlider.update({
+      where: { id },
+      data,
+    });
+
+    res.json({ success: true, message: "Foto slider hero E-Surat berhasil diperbarui.", data: updated });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Gagal memperbarui foto slider E-Surat." });
+  }
+});
+
+// DELETE /api/admin/sliders/:id (Hapus foto slider hero)
+app.delete("/api/admin/sliders/:id", async (req: Request, res: Response) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) {
+      return res.status(400).json({ success: false, message: "ID slider tidak valid." });
+    }
+
+    await db.esuratBannerSlider.delete({ where: { id } });
+    res.json({ success: true, message: "Foto slider hero E-Surat berhasil dihapus." });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Gagal menghapus foto slider E-Surat." });
+  }
+});
+
 // Fallback all non-API routes to index.html (SPA History Fallback)
 app.get("*", (req: Request, res: Response) => {
   res.sendFile(path.join(clientDistPath, "index.html"), (err) => {

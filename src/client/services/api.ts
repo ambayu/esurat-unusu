@@ -275,4 +275,35 @@ export const deleteAdminUser = (id: number) =>
 export const deleteSurat = (id: number) =>
   api.delete<{ success: boolean; message: string }>(`/surat/${id}`);
 
+// ==========================================
+// BANNER SLIDER HERO (`/api/sliders`, `/api/admin/sliders`)
+// ==========================================
+export interface EsuratBannerSliderItem {
+  id: number;
+  judul: string;
+  subjudul?: string | null;
+  gambarUrl: string;
+  gambarMobileUrl?: string | null;
+  linkUrl?: string | null;
+  urutan: number;
+  active: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export const fetchPublicSliders = () =>
+  api.get<{ success: boolean; data: EsuratBannerSliderItem[] }>('/sliders');
+
+export const fetchAdminSliders = () =>
+  api.get<{ success: boolean; data: EsuratBannerSliderItem[] }>('/admin/sliders');
+
+export const createAdminSlider = (data: Partial<EsuratBannerSliderItem>) =>
+  api.post<{ success: boolean; message: string; data: EsuratBannerSliderItem }>('/admin/sliders', data);
+
+export const updateAdminSlider = (id: number, data: Partial<EsuratBannerSliderItem>) =>
+  api.put<{ success: boolean; message: string; data: EsuratBannerSliderItem }>(`/admin/sliders/${id}`, data);
+
+export const deleteAdminSlider = (id: number) =>
+  api.delete<{ success: boolean; message: string }>(`/admin/sliders/${id}`);
+
 export default api;
