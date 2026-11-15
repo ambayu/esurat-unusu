@@ -1,5 +1,9 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import type { SessionUser } from '../services/api';
+import { checkOneUnusuSession } from '../services/api';
+
+const ONE_UNUSU_URL = import.meta.env.VITE_ONE_UNUSU_URL || 'http://localhost:5178';
+const SSO_CLIENT_ID = import.meta.env.VITE_SSO_CLIENT_ID || 'e538eac90fb83578';
 
 interface AuthContextValue {
   user: SessionUser | null;
@@ -17,30 +21,84 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<SessionUser | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const token = localStorage.getItem(TOKEN_KEY);
-    const raw = localStorage.getItem(USER_KEY);
+  // Logout di E-Surat HANYA membersihkan sesi lokal. Sesi di ONE UNUSU tetap aktif.
+  const logout = useCallback(() => {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
+    setUser(null);
+  }, []);
 
-    if (token && raw) {
+  useEffect(() => {
+    let cancelled = false;
+
+    const bootstrap = async () => {
+      const token = localStorage.getItem(TOKEN_KEY);
+      const raw = localStorage.getItem(USER_KEY);
+
+      if (!token || !raw) {
+        if (!cancelled) setLoading(false);
+        return;
+      }
+
+      let cachedUser: SessionUser | null = null;
       try {
-        setUser(JSON.parse(raw) as SessionUser);
+        cachedUser = JSON.parse(raw) as SessionUser;
+        if (!cancelled) setUser(cachedUser);
       } catch {
         localStorage.removeItem(USER_KEY);
       }
-    }
-    setLoading(false);
+
+      try {
+        // Sinkronisasi status sesi dengan Identity Provider ONE UNUSU
+        const ssoStatus = await checkOneUnusuSession();
+
+        // Kasus A: Pengguna telah logout dari ONE UNUSU
+        if (ssoStatus?.authenticated === false) {
+          localStorage.removeItem(TOKEN_KEY);
+          localStorage.removeItem(USER_KEY);
+          if (!cancelled) {
+            setUser(null);
+            setLoading(false);
+          }
+          return;
+        }
+
+        // Kasus B: Pengguna telah berganti akun di ONE UNUSU
+        if (
+          ssoStatus?.authenticated === true &&
+          ssoStatus.user?.username &&
+          cachedUser?.username &&
+          ssoStatus.user.username.toLowerCase() !== cachedUser.username.toLowerCase()
+        ) {
+          localStorage.removeItem(TOKEN_KEY);
+          localStorage.removeItem(USER_KEY);
+          if (!cancelled) {
+            setUser(null);
+            setLoading(false);
+          }
+          window.location.replace(
+            `${ONE_UNUSU_URL}/authorize?client_id=${encodeURIComponent(SSO_CLIENT_ID)}`
+          );
+          return;
+        }
+      } catch {
+        // Abaikan kegagalan jaringan saat offline
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    void bootstrap();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const saveSession = (token: string, sessionUser: SessionUser) => {
     localStorage.setItem(TOKEN_KEY, token);
     localStorage.setItem(USER_KEY, JSON.stringify(sessionUser));
     setUser(sessionUser);
-  };
-
-  const logout = () => {
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(USER_KEY);
-    setUser(null);
   };
 
   return (

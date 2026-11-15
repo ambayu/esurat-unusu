@@ -97,6 +97,36 @@ api.interceptors.response.use(
 export const ssoLogin = (client_id: string, token: string) =>
   api.post<{ success: boolean; token: string; user: SessionUser; message?: string }>('/auth/sso', { client_id, token });
 
+/**
+ * Periksa status sesi terpusat di Identity Provider (ONE UNUSU).
+ *
+ * Mengirim kredensial cookie ke endpoint session-check SSO.
+ * - authenticated: true -> sesi ONE UNUSU aktif.
+ * - authenticated: false -> pengguna telah logout dari ONE UNUSU.
+ * - authenticated: null -> gagal menghubungi server SSO (offline/network error).
+ */
+export const checkOneUnusuSession = async () => {
+  const ssoApiUrl = import.meta.env.VITE_SSO_API_URL || 'http://localhost:5000/api';
+  try {
+    const res = await axios.get<{
+      status: boolean;
+      authenticated: boolean;
+      user?: { username: string; nama: string; role: string };
+      message?: string;
+    }>(`${ssoApiUrl}/sso/session-check`, {
+      withCredentials: true,
+      timeout: 3500,
+    });
+    return res.data;
+  } catch (err: any) {
+    return {
+      status: false,
+      authenticated: null,
+      message: err.message,
+    };
+  }
+};
+
 export interface JenisSuratItem {
   id: number;
   kode: string;
