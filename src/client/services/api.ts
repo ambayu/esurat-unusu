@@ -1,7 +1,23 @@
 import axios from 'axios';
 
+/*
+ * Alamat API.
+ *
+ * Nilai cadangan `http://localhost:5002/api` tidak boleh ikut tertanam ke bundle
+ * produksi: browser pengunjung akan menghubungi komputer mereka sendiri dan
+ * seluruh permintaan (termasuk penukaran tiket SSO) gagal. Cadangan dibuat
+ * jalur relatif agar selalu menuju host yang sedang dibuka.
+ */
+const BASE_URL = import.meta.env.VITE_API_URL || '/api';
+
+if (import.meta.env.PROD && /localhost|127\.0\.0\.1/.test(BASE_URL)) {
+  console.error(
+    '[ESURAT] VITE_API_URL mengarah ke ' + BASE_URL + '. Perbaiki .env server lalu build ulang.'
+  );
+}
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5002/api',
+  baseURL: BASE_URL,
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
