@@ -52,19 +52,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Sinkronisasi status sesi dengan Identity Provider ONE UNUSU
         const ssoStatus = await checkOneUnusuSession();
 
-        // Kasus A: Pengguna telah logout dari ONE UNUSU
+        // Kasus A: Sesi pusat ONE UNUSU tidak terdeteksi
         if (ssoStatus?.authenticated === false) {
-          localStorage.removeItem(TOKEN_KEY);
-          localStorage.removeItem(USER_KEY);
-          if (!cancelled) {
-            setUser(null);
-            setLoading(false);
-          }
-          return;
-        }
-
-        // Kasus B: Pengguna telah berganti akun di ONE UNUSU
-        if (
+          // Pertahankan sesi lokal yang valid agar tidak terjadi infinite login loop
+          console.warn('[SSO] Sesi ONE UNUSU tidak terdeteksi, mempertahankan sesi lokal E-Surat.');
+        } else if (
           ssoStatus?.authenticated === true &&
           ssoStatus.user?.username &&
           cachedUser?.username &&
