@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 import { ssoLogin } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -6,6 +6,13 @@ import { SsoLoadingScreen } from '../components/SsoLoadingScreen';
 import { SsoProblemScreen } from '../components/SsoProblemScreen';
 
 type SsoExchangeResult = Awaited<ReturnType<typeof ssoLogin>>;
+
+/**
+ * Tiket terakhir yang terbaca dari address bar. `replaceState` membersihkan URL
+ * seketika, sehingga pemasangan ulang komponen tidak lagi menemukan tiket di
+ * query dan sempat menampilkan layar "permintaan belum selesai".
+ */
+let TIKET_TERAKHIR: string | null = null;
 
 /** Alamat bantuan yang ditampilkan pada layar kegagalan masuk. */
 const ALAMAT_BANTUAN = import.meta.env.VITE_BANTUAN_EMAIL || 'esurat@unusu.ac.id';
@@ -107,18 +114,38 @@ function exchangeSsoToken(token: string): Promise<SsoExchangeResult> {
 
 /**
  * Callback SSO ONE UNUSU.
- * URL: /sso/callback?client_id=..&token=..
+ * URL: /sso/callback?token=..
  * Token diverifikasi backend aplikasi ini (server-to-server).
  */
 export function SsoCallbackPage() {
   const { saveSession } = useAuth();
   const [masalah, setMasalah] = useState<Masalah | null>(null);
+  /*
+   * React StrictMode memasang efek dua kali di mode pengembangan. Tanpa
+   * penanda, tiket sekali-pakai ditembak dua request paralel: satu sukses, satu
+   * dibatalkan, lalu UI sempat membaca keadaan gagal dan pengguna tidak pernah
+   * sampai ke panel. Penanda ini memastikan penukaran hanya dijalankan sekali.
+   */
+  const sudahJalan = useRef(false);
 
   useEffect(() => {
-    const token = new URLSearchParams(window.location.search).get('token');
+    /*
+     * Tiket dibaca dari URL lalu disimpan di memori modul, karena
+     * `replaceState` sudah membersihkan address bar. Bila komponen terpasang
+     * ulang, tiket tetap tersedia dan proses tidak dianggap batal.
+     */
+    const tokenDariUrl = new URLSearchParams(window.location.search).get('token');
+    if (tokenDariUrl && tokenDariUrl.length <= 256) {
+      TIKET_TERAKHIR = tokenDariUrl;
+    }
 
     // Bersihkan token dari address bar
     window.history.replaceState(null, '', `${window.location.pathname}`);
+
+    if (sudahJalan.current) return;
+    sudahJalan.current = true;
+
+    const token = tokenDariUrl || TIKET_TERAKHIR;
 
     // Portal mengirim balik pengguna tanpa tiket bila permintaan izin tidak
     // selesai. Ini keadaan normal, bukan kerusakan, jadi penjelasannya dibuat
@@ -138,8 +165,6 @@ export function SsoCallbackPage() {
       return;
     }
 
-    let cancelled = false;
-
     (async () => {
       try {
         const response = await exchangeSsoToken(token);
@@ -148,22 +173,17 @@ export function SsoCallbackPage() {
         }
 
         saveSession(response.data.token, response.data.user);
+        TIKET_TERAKHIR = null;
 
-        if (!cancelled) {
-          // Arahkan langsung ke dashboard/agenda surat setelah login berhasil
-          const targetUrl = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/dashboard`;
-          window.location.replace(targetUrl);
-        }
+        // Arahkan langsung ke dashboard/agenda surat setelah login berhasil.
+        // Hasil sukses SELALU dipakai: dulu ada penanda `cancelled` yang
+        // membuang hasil ini saat komponen terpasang ulang.
+        const targetUrl = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/dashboard`;
+        window.location.replace(targetUrl);
       } catch (err: any) {
-        if (!cancelled) {
-          setMasalah(terjemahkanGagalSso(err, err.response?.data));
-        }
+        setMasalah(terjemahkanGagalSso(err, err.response?.data));
       }
     })();
-
-    return () => {
-      cancelled = true;
-    };
   }, [saveSession]);
 
   // Verifikasi tiket menunggu request jaringan nyata (server-to-server), jadi
