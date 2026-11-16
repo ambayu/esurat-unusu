@@ -1,5 +1,12 @@
 # CHANGELOG — E-SURAT UNUSU
 
+## [2026-11-19] — Callback SSO Token-Only
+
+### Changed
+- Callback SSO beralih ke pola token-only (`/sso/callback?token=...`). Client ID dan Key diambil langsung dari konfigurasi server aplikasi demi keamanan.
+- Parameter token di URL dihapus dari address bar segera setelah dibaca.
+
+
 ## [2026-11-18] — Slider Hero Berbasis Berkas dengan Dukungan Video
 
 ### Added

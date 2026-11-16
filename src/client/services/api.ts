@@ -94,8 +94,8 @@ api.interceptors.response.use(
   }
 );
 
-export const ssoLogin = (client_id: string, token: string) =>
-  api.post<{ success: boolean; token: string; user: SessionUser; message?: string }>('/auth/sso', { client_id, token });
+export const ssoLogin = (token: string) =>
+  api.post<{ success: boolean; token: string; user: SessionUser; message?: string }>('/auth/sso', { token });
 
 /**
  * Periksa status sesi terpusat di Identity Provider (ONE UNUSU).
