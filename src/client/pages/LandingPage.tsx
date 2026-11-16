@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getAssetUrl, fetchPublicSliders, EsuratBannerSliderItem } from '../services/api';
+import { JENIS_MEDIA, jenisMedia, type JenisMedia } from '../lib/mediaSlider';
 import { LatarDekoratif } from '../components/LatarDekoratif';
 import { Reveal } from '../components/Reveal';
 import {
@@ -31,6 +32,8 @@ interface SlideItem {
   primaryCtaIcon: React.ElementType;
   imageSrc: string;
   imageAlt: string;
+  /** Slide video tidak memakai timer; perpindahan menunggu `onEnded`. */
+  jenis: JenisMedia;
 }
 
 const HERO_SLIDES: SlideItem[] = [
@@ -46,6 +49,7 @@ const HERO_SLIDES: SlideItem[] = [
     primaryCtaIcon: ArrowRightOnRectangleIcon,
     imageSrc: '/images/hero-slider-1.png',
     imageAlt: 'Meja layanan tata naskah dengan berkas surat resmi kampus',
+    jenis: JENIS_MEDIA.GAMBAR,
   },
   {
     id: 'verifikasi-keaslian',
@@ -59,6 +63,7 @@ const HERO_SLIDES: SlideItem[] = [
     primaryCtaIcon: QrCodeIcon,
     imageSrc: '/images/hero-slider-2.png',
     imageAlt: 'Pemindaian kode QR keaslian pada dokumen surat resmi',
+    jenis: JENIS_MEDIA.GAMBAR,
   },
   {
     id: 'disposisi-efisien',
@@ -72,6 +77,7 @@ const HERO_SLIDES: SlideItem[] = [
     primaryCtaIcon: ShieldCheckIcon,
     imageSrc: '/images/hero-slider-3.png',
     imageAlt: 'Petugas menyerahkan berkas dinas di koridor layanan kampus',
+    jenis: JENIS_MEDIA.GAMBAR,
   },
 ];
 
@@ -144,6 +150,7 @@ export const LandingPage: React.FC = () => {
             primaryCtaIcon: ArrowRightOnRectangleIcon,
             imageSrc: item.gambarUrl,
             imageAlt: item.judul,
+            jenis: jenisMedia(item.gambarUrl),
           }));
           setSlides(mapped);
         }
@@ -189,13 +196,17 @@ export const LandingPage: React.FC = () => {
     setIsPaused(false);
   };
 
+  // Slide video tidak memakai timer: perpindahan menunggu video selesai agar
+  // isinya tidak terpotong. Slide gambar tetap berotasi tiap 6 detik.
+  const slideAktifVideo = slides[activeSlide]?.jenis === JENIS_MEDIA.VIDEO;
+
   useEffect(() => {
-    if (isPaused) return;
+    if (isPaused || slideAktifVideo) return;
     const timer = setInterval(() => {
       nextSlide();
     }, 6000);
     return () => clearInterval(timer);
-  }, [isPaused, nextSlide]);
+  }, [isPaused, nextSlide, slideAktifVideo]);
 
   const current = slides[activeSlide] || slides[0] || HERO_SLIDES[0];
   const PrimaryIcon = current.primaryCtaIcon;
@@ -245,21 +256,38 @@ export const LandingPage: React.FC = () => {
                 activeSlide === index ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'
               }`}
             >
-              <img
-                src={slide.imageSrc.startsWith('data:') ? slide.imageSrc : getAssetUrl(slide.imageSrc)}
-                alt={slide.imageAlt}
-                width={640}
-                height={360}
-                className="h-full w-full object-cover object-center"
-                loading={index === 0 ? 'eager' : 'lazy'}
-                decoding="async"
-                onError={(e) => {
-                  const target = e.currentTarget;
-                  if (!target.src.endsWith('.svg')) {
-                    target.src = getAssetUrl(slide.imageSrc.replace('.png', '.svg'));
-                  }
-                }}
-              />
+              {slide.jenis === JENIS_MEDIA.VIDEO ? (
+                // Video bisu + playsInline agar autoplay diizinkan peramban.
+                // Setelah selesai, slider berpindah ke slide berikutnya.
+                <video
+                  src={getAssetUrl(slide.imageSrc)}
+                  className="h-full w-full object-cover object-center"
+                  muted
+                  playsInline
+                  autoPlay
+                  preload={index === 0 ? 'auto' : 'metadata'}
+                  aria-label={slide.imageAlt}
+                  onEnded={() => {
+                    if (index === activeSlide) nextSlide();
+                  }}
+                />
+              ) : (
+                <img
+                  src={slide.imageSrc.startsWith('data:') ? slide.imageSrc : getAssetUrl(slide.imageSrc)}
+                  alt={slide.imageAlt}
+                  width={640}
+                  height={360}
+                  className="h-full w-full object-cover object-center"
+                  loading={index === 0 ? 'eager' : 'lazy'}
+                  decoding="async"
+                  onError={(e) => {
+                    const target = e.currentTarget;
+                    if (!target.src.endsWith('.svg')) {
+                      target.src = getAssetUrl(slide.imageSrc.replace('.png', '.svg'));
+                    }
+                  }}
+                />
+              )}
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-slate-950/25" />
               <div className="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-slate-950/45 to-transparent" />
             </div>
