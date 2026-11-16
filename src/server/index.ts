@@ -52,23 +52,16 @@ ensureDirectories();
 app.use(express.static(clientDistPath));
 app.use("/esurat", express.static(clientDistPath));
 
-/**
- * Normalisasi alamat tanpa awalan aplikasi.
+/*
+ * Pengalihan paksa ke awalan `/esurat` DIHAPUS.
  *
- * Aplikasi ini dipasang di sub-path `/esurat`. Bila pengunjung membuka
- * `/login` (tanpa awalan), router berjalan dengan basename kosong dan
- * alamatnya berubah menjadi `/esurat/login` begitu halaman dimuat ulang.
- * Pengalihan di sisi server membuat semua tautan lama langsung mendarat pada
- * bentuk yang benar, sebelum React sempat berjalan.
- *
- * Hanya jalur halaman yang dialihkan; `/api`, berkas statis, dan media
- * dibiarkan agar tidak merusak aset maupun permintaan data.
+ * Aplikasi kini dilayani pada akar domainnya, sejalan dengan `urlRedirect`
+ * SSO di database ONE (`https://esurat.unusu.ac.id/sso/callback`). Pengalihan
+ * lama membuat setiap halaman callback dibelokkan ke `/esurat/sso/callback`
+ * sehingga router tidak menemukan rute yang cocok dan pengguna tidak pernah
+ * sampai ke panel. Awalan `/esurat` masih dilayani sebagai alias statis di
+ * atas agar tautan lama tidak mati.
  */
-app.get(/^\/(?!esurat(\/|$)|api(\/|$)|assets(\/|$)|media(\/|$)).*/, (req: Request, res: Response, next: NextFunction) => {
-  // Permintaan berkas (mengandung titik) diteruskan ke static/fallback.
-  if (req.path.includes(".")) return next();
-  return res.redirect(302, `/esurat${req.originalUrl}`);
-});
 app.use("/public", express.static(publicPath));
 app.use("/uploads", express.static(uploadsPath));
 app.use("/assets", express.static(path.join(clientDistPath, "assets")));
