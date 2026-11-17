@@ -9,7 +9,7 @@ import {
 import { AnimatedFlatSsoLogo } from '../components/AnimatedFlatSsoLogo';
 import { SsoLoadingScreen } from '../components/SsoLoadingScreen';
 
-const ONE_UNUSU_URL = import.meta.env.VITE_ONE_UNUSU_URL || 'http://localhost:5178';
+const ONE_UNUSU_URL = import.meta.env.VITE_ONE_UNUSU_URL || 'http://localhost:5173';
 const SSO_CLIENT_ID = import.meta.env.VITE_SSO_CLIENT_ID || 'e538eac90fb83578';
 
 /**
