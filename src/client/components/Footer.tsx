@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { ONE_UNUSU_URL } from '../lib/ssoConfig';
 import {
   ArrowTopRightOnSquareIcon,
   EnvelopeIcon,
@@ -11,7 +12,7 @@ import {
 const TAUTAN_LAYANAN = [
   { label: 'Cek Keaslian Dokumen', to: '/verifikasi', internal: true },
   { label: 'Masuk Akun SSO', to: '/login', internal: true },
-  { label: 'Portal ONE UNUSU', to: 'https://unusu.bpp-developer.com/', internal: false },
+  { label: 'Portal ONE UNUSU', to: ONE_UNUSU_URL, internal: false },
   { label: 'Situs Resmi Kampus', to: 'https://unusu.ac.id', internal: false },
 ];
 /** Ringkasan alur yang bisa dipakai pengunjung tanpa masuk akun. */

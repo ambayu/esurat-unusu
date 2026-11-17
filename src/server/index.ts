@@ -17,6 +17,9 @@ import {
 } from "./sliderMedia.js";
 
 dotenv.config();
+if (process.env.NODE_ENV === 'production' && !process.env.SSO_BASE_URL?.trim()) throw new Error('Missing required SSO_BASE_URL configuration.');
+const SSO_BASE_URL = process.env.SSO_BASE_URL || 'http://localhost:5000';
+if (!/^https?:$/.test(new URL(SSO_BASE_URL).protocol)) throw new Error('SSO_BASE_URL must use HTTP(S).');
 
 const app = express();
 const prisma = new PrismaClient();
@@ -98,7 +101,6 @@ if (!JWT_SECRET) {
   console.error("FATAL: JWT_SECRET belum diset di environment. Server dihentikan demi keamanan.");
   process.exit(1);
 }
-const SSO_BASE_URL = process.env.SSO_BASE_URL || "http://localhost:5000";
 const SSO_CLIENT_ID = process.env.SSO_CLIENT_ID || "e538eac90fb83578";
 const SSO_CLIENT_KEY = process.env.SSO_CLIENT_KEY || "";
 
