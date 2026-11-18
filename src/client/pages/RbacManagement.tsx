@@ -356,6 +356,7 @@ export const RbacManagement: React.FC<RbacManagementProps> = ({ mode }) => {
             <table className="w-full text-left text-xs border-collapse min-w-[850px]">
               <thead>
                 <tr className="border-b border-[#CBD5E1] bg-slate-50 text-slate-600 font-bold">
+                  <th className="py-3 px-3 w-12 text-center">No</th>
                   <th className="py-3 px-3">NIDN / NIM</th>
                   <th className="py-3 px-3">Nama Lengkap</th>
                   <th className="py-3 px-3">Email</th>
@@ -367,18 +368,19 @@ export const RbacManagement: React.FC<RbacManagementProps> = ({ mode }) => {
               <tbody className="divide-y divide-slate-100">
                 {users.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-8 text-center text-slate-400">
+                    <td colSpan={7} className="py-8 text-center text-slate-400">
                       Belum ada pengguna yang terdaftar.
                     </td>
                   </tr>
                 ) : (
-                  users.map((u) => {
+                  users.map((u, index) => {
                     const isSuper =
                       u.roles?.some((r) => r.code === 'SUPERADMIN') ||
                       u.username === 'admin' ||
                       u.username === 'superadmin';
                     return (
                       <tr key={u.id} className="hover:bg-slate-50/80 transition">
+                        <td className="py-3 px-3 text-center text-slate-500 tabular-nums">{index + 1}</td>
                         <td className="py-3 px-3 font-mono font-semibold text-slate-800">
                           {u.nidn || u.nim || u.username}
                         </td>
@@ -482,6 +484,7 @@ export const RbacManagement: React.FC<RbacManagementProps> = ({ mode }) => {
             <table className="w-full text-left text-xs border-collapse">
               <thead>
                 <tr className="border-b border-[#CBD5E1] bg-slate-50 text-slate-600 font-bold">
+                  <th className="py-3 px-3 w-12 text-center">No</th>
                   <th className="py-3 px-3">Kode Peran</th>
                   <th className="py-3 px-3">Nama Peran</th>
                   <th className="py-3 px-3">Deskripsi</th>
@@ -493,13 +496,14 @@ export const RbacManagement: React.FC<RbacManagementProps> = ({ mode }) => {
               <tbody className="divide-y divide-slate-100">
                 {roles.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-8 text-center text-slate-400">
+                    <td colSpan={7} className="py-8 text-center text-slate-400">
                       Belum ada peran terdaftar.
                     </td>
                   </tr>
                 ) : (
-                  roles.map((r) => (
+                  roles.map((r, index) => (
                     <tr key={r.id} className="hover:bg-slate-50/80 transition">
+                      <td className="py-3 px-3 text-center text-slate-500 tabular-nums">{index + 1}</td>
                       <td className="py-3 px-3 font-mono font-bold text-slate-700">
                         {r.code}
                       </td>

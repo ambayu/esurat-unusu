@@ -295,6 +295,7 @@ export function ListPageTemplate<T>({
               <table className={`w-full ${minTableWidth} text-left text-xs text-slate-700 border-collapse`}>
                 <thead>
                   <tr className="border-b border-[#CBD5E1] bg-slate-50/70 text-slate-600 font-bold text-[11px] uppercase tracking-wider">
+                    <th scope="col" className="py-3 px-4 w-16 text-center normal-case">No</th>
                     {columns.map((col) => (
                       <th key={col.key} className={`py-3 px-4 ${col.headerClassName ?? ''}`}>
                         {col.header}
@@ -305,6 +306,7 @@ export function ListPageTemplate<T>({
                 <tbody className="divide-y divide-[#CBD5E1]/60">
                   {rows.map((row, index) => (
                     <tr key={rowKey(row, index)} className="hover:bg-slate-50/80 transition-colors">
+                      <td className="py-3.5 px-4 text-center text-slate-500 tabular-nums">{index + 1}</td>
                       {columns.map((col) => (
                         <td key={col.key} className={`py-3.5 px-4 ${col.cellClassName ?? ''}`}>
                           {col.render
