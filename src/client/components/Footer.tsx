@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { ONE_UNUSU_URL } from '../lib/ssoConfig';
 import {
   ArrowTopRightOnSquareIcon,
@@ -32,7 +32,16 @@ const TAUTAN_BANTUAN = [
  * Semua tautan diberi tinggi minimum 44px supaya memenuhi ambang tap target.
  */
 export const Footer: React.FC = () => {
+  const location = useLocation();
   const tahun = new Date().getFullYear();
+
+  if (
+    location.pathname.startsWith('/admin') ||
+    location.pathname === '/login' ||
+    location.pathname === '/sso/callback'
+  ) {
+    return null;
+  }
 
   return (
     <footer className="bg-surat-green-dark text-white">

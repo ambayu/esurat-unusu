@@ -1,19 +1,28 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
+  ArrowDownTrayIcon,
   ArrowLeftIcon,
+  ArrowTopRightOnSquareIcon,
   BuildingOffice2Icon,
   CalendarDaysIcon,
   CheckCircleIcon,
+  CheckIcon,
   ClockIcon,
+  DocumentArrowUpIcon,
+  DocumentCheckIcon,
   DocumentTextIcon,
   ExclamationCircleIcon,
+  ExclamationTriangleIcon,
   InboxIcon,
   PaperAirplaneIcon,
   PencilSquareIcon,
   QrCodeIcon,
   ShieldCheckIcon,
+  UserCircleIcon,
+  UserIcon,
   UserPlusIcon,
+  XMarkIcon,
 } from '@heroicons/react/24/outline';
 import { 
   fetchSuratDetail, 
@@ -25,7 +34,15 @@ import {
   UnitKerjaItem, 
   getAssetUrl 
 } from '../services/api';
+import { PageShell } from '../components/PageShell';
+import { CardContainer } from '../components/CardContainer';
 
+const STATUS_STEPS = [
+  { key: 'diajukan', label: '1. Diajukan', desc: 'Permohonan naskah diajukan pemohon' },
+  { key: 'diproses', label: '2. Diproses', desc: 'Penelaahan biro & lembar disposisi' },
+  { key: 'disetujui', label: '3. Disetujui', desc: 'Persetujuan pimpinan berwenang' },
+  { key: 'selesai', label: '4. Selesai', desc: 'Penomoran surat & TTE QR aktif' },
+];
 
 export const SuratDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -33,6 +50,8 @@ export const SuratDetail: React.FC = () => {
   const [units, setUnits] = useState<UnitKerjaItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingNoSurat, setLoadingNoSurat] = useState(false);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  const [isSubmittingDisposisi, setIsSubmittingDisposisi] = useState(false);
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   // Disposisi form state
@@ -85,7 +104,7 @@ export const SuratDetail: React.FC = () => {
         setNomorSurat(res.data.data.nomorSurat);
         setStatusMessage({
           type: 'success',
-          text: `Nomor surat otomatis berhasil di-generate sesuai pola: ${res.data.data.formatTemplate}`
+          text: `Nomor surat otomatis berhasil di-generate sesuai format: ${res.data.data.formatTemplate}`
         });
       }
     } catch (err: any) {
@@ -102,6 +121,7 @@ export const SuratDetail: React.FC = () => {
   const handleUpdateStatus = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!id) return;
+    setIsUpdatingStatus(true);
     try {
       await updateStatusSurat(Number(id), {
         status: newStatus,
@@ -119,6 +139,8 @@ export const SuratDetail: React.FC = () => {
         type: 'error',
         text: err?.response?.data?.message || 'Gagal memperbarui status naskah surat'
       });
+    } finally {
+      setIsUpdatingStatus(false);
     }
   };
 
@@ -131,6 +153,7 @@ export const SuratDetail: React.FC = () => {
       });
       return;
     }
+    setIsSubmittingDisposisi(true);
     try {
       await createDisposisi(Number(id), {
         dariUnit: 'Rektorat / Biro Tata Usaha',
@@ -152,331 +175,595 @@ export const SuratDetail: React.FC = () => {
         type: 'error',
         text: err?.response?.data?.message || 'Gagal meneruskan disposisi'
       });
+    } finally {
+      setIsSubmittingDisposisi(false);
     }
   };
 
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'selesai':
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-surat-green-50 text-surat-green-dark border border-surat-green-200">
+            <CheckCircleIcon className="w-3.5 h-3.5 text-surat-green" /> Selesai
+          </span>
+        );
+      case 'disetujui':
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-800 border border-blue-200">
+            <ShieldCheckIcon className="w-3.5 h-3.5 text-blue-600" /> Disetujui
+          </span>
+        );
+      case 'diproses':
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
+            <ClockIcon className="w-3.5 h-3.5 text-amber-600" /> Diproses
+          </span>
+        );
+      case 'ditolak':
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-50 text-rose-800 border border-rose-200">
+            <ExclamationCircleIcon className="w-3.5 h-3.5 text-rose-600" /> Ditolak
+          </span>
+        );
+      default:
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-800 border border-slate-200">
+            <DocumentTextIcon className="w-3.5 h-3.5 text-slate-500" /> Diajukan
+          </span>
+        );
+    }
+  };
+
+  const getStepStatus = (stepKey: string, currentStatus: string) => {
+    if (currentStatus === 'ditolak') {
+      if (stepKey === 'diajukan') return 'completed';
+      return 'rejected';
+    }
+    const order = ['diajukan', 'diproses', 'disetujui', 'selesai'];
+    const currentIndex = order.indexOf(currentStatus);
+    const stepIndex = order.indexOf(stepKey);
+
+    if (stepIndex < currentIndex) return 'completed';
+    if (stepIndex === currentIndex) return 'current';
+    return 'upcoming';
+  };
+
   if (loading) {
-    return <div className="max-w-5xl mx-auto px-4 py-16 text-center text-slate-400">Memuat rincian surat...</div>;
+    return (
+      <div className="w-full py-16 text-center text-slate-400 bg-white border border-[#CBD5E1] rounded-[16px]">
+        <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-slate-200 border-t-surat-green mb-3" />
+        <p className="text-sm font-semibold text-slate-600">Memuat rincian naskah surat...</p>
+      </div>
+    );
   }
 
   if (!surat) {
-    return <div className="max-w-5xl mx-auto px-4 py-16 text-center text-slate-500">Surat tidak ditemukan.</div>;
+    return (
+      <div className="w-full py-16 text-center text-slate-500 bg-white border border-[#CBD5E1] rounded-[16px] space-y-4">
+        <ExclamationTriangleIcon className="w-12 h-12 text-amber-500 mx-auto" />
+        <h2 className="text-base font-bold text-slate-800">Surat Tidak Ditemukan</h2>
+        <p className="text-xs text-slate-500">Naskah dinas dengan ID #{id} tidak terdaftar pada basis data persuratan.</p>
+        <Link
+          to="/admin/surat"
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-[12px] bg-surat-green text-white font-bold text-xs hover:bg-surat-green-dark"
+        >
+          <ArrowLeftIcon className="w-4 h-4" />
+          <span>Kembali ke Agenda Surat</span>
+        </Link>
+      </div>
+    );
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
-      <div className="flex items-center justify-between">
-        <Link to="/admin/surat" className="inline-flex items-center text-xs font-bold text-slate-500 hover:text-surat-green min-h-[44px]">
-          <ArrowLeftIcon className="w-3.5 h-3.5 mr-1" />
-          <span>Kembali ke Agenda Surat</span>
-        </Link>
-        <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-slate-100 text-slate-700">
-          ID Naskah: #{surat.id}
-        </span>
-      </div>
-
+    <PageShell
+      title={surat.perihal}
+      description={`Agenda: ${surat.nomorAgenda} • Jenis: ${surat.jenisSurat?.nama || 'Naskah Dinas'} • Diajukan: ${new Date(
+        surat.createdAt
+      ).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}`}
+      badge={
+        <div className="flex flex-wrap items-center gap-2">
+          <span
+            className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider ${
+              surat.tipeSurat === 'masuk'
+                ? 'bg-slate-100 text-slate-700 border border-slate-200'
+                : 'bg-surat-green-50 text-surat-green-dark border border-surat-green-200'
+            }`}
+          >
+            {surat.tipeSurat === 'masuk' ? 'Surat Masuk' : 'Surat Keluar'}
+          </span>
+          {getStatusBadge(surat.status)}
+          <span className="text-[11px] font-mono font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-600">
+            ID: #{surat.id}
+          </span>
+        </div>
+      }
+      actions={
+        <div className="flex items-center gap-2">
+          <Link
+            to="/admin/surat"
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-[12px] border border-[#CBD5E1] bg-white text-slate-700 hover:bg-slate-50 font-bold text-xs min-h-[44px] transition"
+          >
+            <ArrowLeftIcon className="w-4 h-4 text-slate-500" />
+            <span>Kembali ke Agenda</span>
+          </Link>
+          <Link
+            to={`/verifikasi/${surat.qrCodeToken}`}
+            target="_blank"
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-[12px] bg-surat-green-50 text-surat-green-dark border border-surat-green-200 hover:bg-surat-green-100 font-bold text-xs min-h-[44px] transition"
+            title="Buka Halaman Verifikasi Publik"
+          >
+            <QrCodeIcon className="w-4 h-4 text-surat-green" />
+            <span>Cek Validitas QR</span>
+          </Link>
+        </div>
+      }
+    >
       {/* Global Status Notification */}
       {statusMessage && (
         <div
-          className={`p-4 rounded-2xl flex items-center space-x-3 text-xs sm:text-sm font-semibold transition ${
+          className={`p-4 rounded-[14px] flex items-center justify-between text-xs sm:text-sm font-semibold transition ${
             statusMessage.type === 'success'
-              ? 'bg-surat-green-50 border border-surat-green-100 text-surat-green-dark'
+              ? 'bg-surat-green-50 border border-surat-green-200 text-surat-green-dark'
               : 'bg-rose-50 border border-rose-200 text-rose-700'
           }`}
         >
-          {statusMessage.type === 'success' ? (
-            <CheckCircleIcon className="w-5 h-5 text-surat-green shrink-0" />
-          ) : (
-            <ExclamationCircleIcon className="w-5 h-5 text-rose-600 shrink-0" />
-          )}
-          <span>{statusMessage.text}</span>
+          <div className="flex items-center space-x-2.5">
+            {statusMessage.type === 'success' ? (
+              <CheckCircleIcon className="w-5 h-5 text-surat-green shrink-0" />
+            ) : (
+              <ExclamationCircleIcon className="w-5 h-5 text-rose-600 shrink-0" />
+            )}
+            <span>{statusMessage.text}</span>
+          </div>
+          <button
+            onClick={() => setStatusMessage(null)}
+            className="p-1 text-slate-400 hover:text-slate-600 rounded-md"
+          >
+            <XMarkIcon className="w-4 h-4" />
+          </button>
         </div>
       )}
 
-      {/* Main Info Card */}
-      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 space-y-6">
-        <div className="flex flex-col sm:flex-row justify-between items-start gap-4 pb-6 border-b border-slate-100">
-          <div>
-            <div className="flex items-center space-x-2">
-              <span className="font-mono text-xs font-bold bg-slate-100 px-2.5 py-1 rounded text-slate-600">
-                {surat.nomorAgenda}
-              </span>
-              <span className="text-xs font-bold bg-surat-green-50 text-surat-green-dark px-2.5 py-1 rounded">
-                {surat.jenisSurat?.nama}
-              </span>
-            </div>
-            <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 mt-2">{surat.perihal}</h1>
-            {surat.nomorSurat && (
-              <p className="text-xs font-mono font-bold text-surat-green mt-1">
-                Nomor Surat: {surat.nomorSurat}
-              </p>
-            )}
-          </div>
+      {/* WORKFLOW STEPPER ALUR SURAT */}
+      <CardContainer
+        title="Alur Progres Naskah Persuratan"
+        subtitle="Tahapan siklus hidup dokumen dari registrasi awal hingga penomoran resmi dan tanda tangan elektronik."
+        badge={
+          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700">
+            Siklus Naskah
+          </span>
+        }
+      >
+        <div className="py-2">
+          {/* Stepper Bar Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 relative">
+            {STATUS_STEPS.map((step, idx) => {
+              const state = getStepStatus(step.key, surat.status);
+              const isLast = idx === STATUS_STEPS.length - 1;
 
-          {/* QR Code Token Badge */}
-          <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 text-center shrink-0">
-            <QrCodeIcon className="w-8 h-8 text-slate-700 mx-auto" />
-            <span className="text-[10px] font-mono text-slate-400 block mt-1">{surat.qrCodeToken.slice(0, 16)}...</span>
-            <span className="text-[10px] font-bold text-surat-green block">TTE Terverifikasi</span>
-          </div>
-        </div>
+              return (
+                <div key={step.key} className="relative flex flex-col">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs shrink-0 transition-all ${
+                        state === 'completed'
+                          ? 'bg-surat-green text-white shadow-xs'
+                          : state === 'current'
+                          ? 'bg-white border-2 border-surat-green text-surat-green shadow-xs ring-4 ring-surat-green/10'
+                          : state === 'rejected'
+                          ? 'bg-rose-600 text-white shadow-xs'
+                          : 'bg-slate-100 border border-slate-200 text-slate-400'
+                      }`}
+                    >
+                      {state === 'completed' ? (
+                        <CheckIcon className="w-5 h-5 stroke-[2.5]" />
+                      ) : state === 'rejected' ? (
+                        <XMarkIcon className="w-5 h-5 stroke-[2.5]" />
+                      ) : (
+                        idx + 1
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <span
+                        className={`block text-xs font-bold leading-tight ${
+                          state === 'completed' || state === 'current'
+                            ? 'text-slate-900'
+                            : state === 'rejected'
+                            ? 'text-rose-700'
+                            : 'text-slate-400'
+                        }`}
+                      >
+                        {step.label}
+                      </span>
+                      <span className="block text-[11px] text-slate-500 truncate mt-0.5">
+                        {step.desc}
+                      </span>
+                    </div>
+                  </div>
 
-        {/* Pemohon Details */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs bg-slate-50 p-4 rounded-2xl">
-          <div>
-            <span className="text-slate-400 block">Nama Pemohon:</span>
-            <strong className="text-slate-800 font-bold">{surat.pemohonNama}</strong>
-          </div>
-          <div>
-            <span className="text-slate-400 block">NIM / NIDN:</span>
-            <strong className="text-slate-800 font-bold">{surat.pemohonId || '-'}</strong>
-          </div>
-          <div>
-            <span className="text-slate-400 block">Program Studi:</span>
-            <strong className="text-slate-800 font-bold">{surat.pemohonProdi || '-'}</strong>
-          </div>
-        </div>
-
-        {surat.keperluan && (
-          <div>
-            <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Keperluan:</h4>
-            <p className="text-xs text-slate-600 leading-relaxed bg-white p-3 rounded-xl border border-slate-100">
-              {surat.keperluan}
-            </p>
-          </div>
-        )}
-
-        {surat.signedBy && (
-          <div className="flex items-center space-x-2 text-xs text-surat-green-dark bg-surat-green-50/70 p-3 rounded-xl border border-surat-green-100">
-            <CheckCircleIcon className="w-4 h-4 text-surat-green shrink-0" />
-            <span>Ditandatangani secara elektronik oleh: <strong>{surat.signedBy}</strong></span>
-          </div>
-        )}
-
-        {surat.lampiranUrl && (
-          <div className="space-y-3">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-slate-50 border border-slate-200 rounded-2xl text-xs">
-              <div className="flex items-center space-x-3 text-slate-700 min-w-0">
-                <div className="w-9 h-9 rounded-xl bg-surat-green-100/80 text-surat-green-dark flex items-center justify-center shrink-0">
-                  <DocumentTextIcon className="w-5 h-5 text-surat-green" />
+                  {/* Highlight bar line */}
+                  <div
+                    className={`h-1.5 w-full rounded-full mt-3 ${
+                      state === 'completed'
+                        ? 'bg-surat-green'
+                        : state === 'current'
+                        ? 'bg-surat-green/40'
+                        : state === 'rejected'
+                        ? 'bg-rose-500'
+                        : 'bg-slate-100'
+                    }`}
+                  />
                 </div>
-                <div className="min-w-0">
-                  <span className="font-bold text-slate-900 block truncate">Berkas Lampiran Dokumen</span>
-                  <span className="text-[11px] text-slate-500 font-mono block truncate">{surat.lampiranUrl}</span>
+              );
+            })}
+          </div>
+
+          {/* Banner Peringatan jika status Ditolak */}
+          {surat.status === 'ditolak' && (
+            <div className="mt-4 p-3.5 bg-rose-50 border border-rose-200 rounded-[12px] flex items-start gap-3">
+              <ExclamationCircleIcon className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-xs font-bold text-rose-900">Naskah Ditangguhkan / Ditolak oleh Pimpinan</p>
+                <p className="text-xs text-rose-700 mt-0.5">
+                  Dokumen ini membutuhkan revisi atau penyesuaian kelengkapan berkas sebelum dapat diproses kembali.
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+      </CardContainer>
+
+      {/* GRID DUA KOLOM: INFORMASI & DOKUMEN (KIRI) VS WORKFLOW TINDAK LANJUT (KANAN) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* KOLOM KIRI (7/12): METADATA SURAT & PRATINJAU BERKAS */}
+        <div className="lg:col-span-7 space-y-6">
+          {/* Card Metadata Naskah */}
+          <CardContainer
+            title="Informasi Naskah Dinas"
+            subtitle="Metadata identitas pemohon, klasifikasi permohonan, dan legalitas surat."
+            badge={<DocumentTextIcon className="w-4 h-4 text-surat-green" />}
+          >
+            <div className="space-y-4">
+              {/* Highlight Nomor Agenda & Nomor Surat */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 bg-slate-50 border border-slate-200 rounded-[12px]">
+                <div>
+                  <span className="block text-[11px] font-bold text-slate-500 uppercase tracking-wide">
+                    Nomor Agenda Arsip
+                  </span>
+                  <p className="font-mono font-bold text-sm text-slate-900 mt-0.5">{surat.nomorAgenda}</p>
+                </div>
+                <div>
+                  <span className="block text-[11px] font-bold text-slate-500 uppercase tracking-wide">
+                    Nomor Surat Resmi
+                  </span>
+                  {surat.nomorSurat ? (
+                    <p className="font-mono font-bold text-sm text-surat-green mt-0.5">{surat.nomorSurat}</p>
+                  ) : (
+                    <p className="text-xs text-slate-400 italic mt-0.5">Belum diterbitkan</p>
+                  )}
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+
+              {/* Rincian Pemohon */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                <div className="p-3 bg-white border border-[#CBD5E1] rounded-[10px]">
+                  <span className="text-slate-400 block text-[10px] font-semibold">Nama Pemohon</span>
+                  <strong className="text-slate-800 font-bold block mt-0.5 truncate">{surat.pemohonNama}</strong>
+                </div>
+                <div className="p-3 bg-white border border-[#CBD5E1] rounded-[10px]">
+                  <span className="text-slate-400 block text-[10px] font-semibold">NIDN / NIM</span>
+                  <strong className="text-slate-800 font-mono font-bold block mt-0.5">{surat.pemohonId || '-'}</strong>
+                </div>
+                <div className="p-3 bg-white border border-[#CBD5E1] rounded-[10px]">
+                  <span className="text-slate-400 block text-[10px] font-semibold">Program Studi / Unit</span>
+                  <strong className="text-slate-800 font-bold block mt-0.5 truncate">{surat.pemohonProdi || '-'}</strong>
+                </div>
+              </div>
+
+              {/* Keperluan */}
+              {surat.keperluan && (
+                <div className="p-3 bg-slate-50 border border-slate-200 rounded-[10px]">
+                  <span className="text-[11px] font-bold text-slate-600 block uppercase tracking-wider mb-1">
+                    Uraian Keperluan / Catatan Pemohon:
+                  </span>
+                  <p className="text-xs text-slate-700 leading-relaxed font-normal">{surat.keperluan}</p>
+                </div>
+              )}
+
+              {/* TTE Signature & QR Info */}
+              <div className="p-3.5 bg-surat-green-50/60 border border-surat-green-100 rounded-[12px] flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-[10px] bg-surat-green text-white flex items-center justify-center shrink-0">
+                    <QrCodeIcon className="w-6 h-6" />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-xs font-bold text-surat-green-dark block">
+                      Tanda Tangan Elektronik (TTE Digital)
+                    </span>
+                    <p className="text-[11px] text-slate-600 truncate mt-0.5">
+                      {surat.signedBy ? (
+                        <>Disahkan oleh: <strong className="font-semibold text-slate-800">{surat.signedBy}</strong></>
+                      ) : (
+                        'Menunggu penandatanganan pimpinan berwenang'
+                      )}
+                    </p>
+                  </div>
+                </div>
+                <div className="text-right shrink-0">
+                  <span className="text-[10px] font-mono text-slate-400 block">{surat.qrCodeToken.slice(0, 12)}...</span>
+                  <span className="text-[10px] font-bold text-surat-green block mt-0.5">Valid QR Token</span>
+                </div>
+              </div>
+            </div>
+          </CardContainer>
+
+          {/* Card Pratinjau Dokumen Berkas Lampiran */}
+          <CardContainer
+            title="Pratinjau Dokumen Lampiran"
+            subtitle="Berkas digital naskah dinas yang diunggah pemohon atau operator persuratan."
+            badge={<DocumentArrowUpIcon className="w-4 h-4 text-surat-green" />}
+            actions={
+              surat.lampiranUrl ? (
                 <a
                   href={getAssetUrl(surat.lampiranUrl)}
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="Unduh atau buka berkas lampiran surat"
-                  className="inline-flex items-center justify-center space-x-1.5 min-h-[44px] px-4 py-2 bg-surat-green hover:bg-surat-green-dark text-white rounded-xl font-bold text-xs transition shrink-0 focus:outline-none focus:ring-2 focus:ring-surat-green-light focus:ring-offset-2"
+                  className="inline-flex items-center gap-1.5 min-h-[44px] px-3.5 py-2 bg-surat-green text-white hover:bg-surat-green-dark text-xs font-bold rounded-[10px] transition shadow-xs"
+                  title="Unduh atau buka di tab baru"
                 >
-                  <span>Unduh / Buka Berkas</span>
+                  <ArrowTopRightOnSquareIcon className="w-4 h-4" />
+                  <span>Buka Berkas</span>
                 </a>
-              </div>
-            </div>
+              ) : undefined
+            }
+          >
+            {surat.lampiranUrl ? (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-[10px] text-xs">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <DocumentTextIcon className="w-5 h-5 text-surat-green shrink-0" />
+                    <span className="font-mono font-medium text-slate-700 truncate">{surat.lampiranUrl}</span>
+                  </div>
+                  <span className="text-[10px] font-mono font-bold bg-white px-2 py-0.5 rounded border border-slate-200 uppercase">
+                    {surat.lampiranUrl.split('.').pop() || 'FILE'}
+                  </span>
+                </div>
 
-            {/* In-App Preview Berkas (PDF / Image / Frame) */}
-            <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-                  <DocumentTextIcon className="w-4 h-4 text-surat-green" />
-                  Preview Pratinjau Berkas Dokumen
-                </span>
-                <span className="text-[10px] font-mono text-slate-400 bg-white px-2 py-0.5 rounded border border-slate-200">
-                  {surat.lampiranUrl.split('.').pop()?.toUpperCase() || 'FILE'}
-                </span>
+                {/* Frame Preview */}
+                <div className="w-full bg-slate-100 rounded-[12px] border border-slate-200 overflow-hidden min-h-[320px] flex items-center justify-center">
+                  {surat.lampiranUrl.match(/\.(jpeg|jpg|gif|png|webp|svg)$/i) ? (
+                    <img
+                      src={getAssetUrl(surat.lampiranUrl)}
+                      alt="Pratinjau Lampiran Naskah Surat"
+                      className="max-h-[500px] w-auto object-contain p-2"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <iframe
+                      src={getAssetUrl(surat.lampiranUrl)}
+                      title="Pratinjau Berkas Lampiran PDF / Dokumen"
+                      className="w-full h-[460px] border-0"
+                    />
+                  )}
+                </div>
               </div>
-              <div className="w-full bg-white rounded-xl border border-slate-200 overflow-hidden shadow-inner flex items-center justify-center min-h-[280px]">
-                {surat.lampiranUrl.match(/\.(jpeg|jpg|gif|png|webp|svg)$/i) ? (
-                  <img
-                    src={getAssetUrl(surat.lampiranUrl)}
-                    alt="Preview Lampiran Surat"
-                    className="max-h-[500px] w-auto object-contain mx-auto"
-                    loading="lazy"
+            ) : (
+              <div className="py-12 text-center text-slate-400 bg-slate-50 rounded-[12px] border border-dashed border-slate-200 space-y-2">
+                <DocumentTextIcon className="w-8 h-8 text-slate-300 mx-auto" />
+                <p className="text-xs font-semibold text-slate-600">Tidak ada berkas lampiran digital yang dilampirkan.</p>
+                <p className="text-[11px] text-slate-400">Naskah ini didaftarkan tanpa berkas fisik terunggah.</p>
+              </div>
+            )}
+          </CardContainer>
+        </div>
+
+        {/* KOLOM KANAN (5/12): TINDAK LANJUT DISPOSISI & APPROVAL PENGESAHAN */}
+        <div className="lg:col-span-5 space-y-6">
+          {/* Card Pengesahan Status Surat */}
+          <CardContainer
+            title="Pengesahan & Status Naskah"
+            subtitle="Pembaruan status persetujuan, penomoran resmi, dan pengesahan TTE."
+            badge={<ShieldCheckIcon className="w-4 h-4 text-surat-green" />}
+          >
+            <form onSubmit={handleUpdateStatus} className="space-y-3.5 text-xs">
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">Status Persetujuan Naskah *</label>
+                <select
+                  value={newStatus}
+                  onChange={(e) => setNewStatus(e.target.value)}
+                  className="w-full px-3 py-2 border border-[#CBD5E1] rounded-[10px] bg-white font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-surat-green-light"
+                >
+                  <option value="diajukan">Diajukan (Tahap Permohonan Awal)</option>
+                  <option value="diproses">Diproses (Sedang Ditelaah / Disposisi)</option>
+                  <option value="disetujui">Disetujui (Disahkan Pimpinan)</option>
+                  <option value="selesai">Selesai (Nomor Terbit & TTE Valid)</option>
+                  <option value="ditolak">Ditolak (Perlu Revisi / Tidak Sesuai)</option>
+                </select>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="font-bold text-slate-700">Nomor Surat Resmi</label>
+                  <button
+                    type="button"
+                    onClick={handleGenerateNomor}
+                    disabled={loadingNoSurat}
+                    className="text-[11px] text-surat-green hover:text-surat-green-dark font-bold inline-flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                    title="Generate nomor otomatis sesuai format jenis surat"
+                  >
+                    <PencilSquareIcon className="w-3.5 h-3.5" />
+                    <span>{loadingNoSurat ? 'Membuat...' : 'Auto-Generate'}</span>
+                  </button>
+                </div>
+                <input
+                  type="text"
+                  value={nomorSurat}
+                  onChange={(e) => setNomorSurat(e.target.value)}
+                  placeholder="Misal: 046/UNUSU/BAAK/KM/X/2026"
+                  className="w-full px-3 py-2 border border-[#CBD5E1] rounded-[10px] font-mono text-xs focus:outline-none focus:ring-2 focus:ring-surat-green-light"
+                />
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">Pejabat Penandatangan (TTE Digital)</label>
+                <input
+                  type="text"
+                  value={signedBy}
+                  onChange={(e) => setSignedBy(e.target.value)}
+                  placeholder="Misal: Prof. Dr. H. Syahrizal, M.A."
+                  className="w-full px-3 py-2 border border-[#CBD5E1] rounded-[10px] text-xs focus:outline-none focus:ring-2 focus:ring-surat-green-light"
+                />
+              </div>
+
+              {newStatus === 'ditolak' && (
+                <div className="p-3 bg-rose-50 border border-rose-200 rounded-[10px] space-y-1">
+                  <label className="font-bold text-rose-800 block text-[11px]">
+                    Alasan Penolakan / Catatan Perbaikan *
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={catatanPenolakan}
+                    onChange={(e) => setCatatanPenolakan(e.target.value)}
+                    placeholder="Tuliskan catatan alasan penolakan agar pemohon dapat memperbaiki dokumen..."
+                    className="w-full p-2 border border-rose-300 rounded-[8px] bg-white text-xs focus:outline-none focus:ring-2 focus:ring-rose-500"
                   />
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={isUpdatingStatus}
+                className="w-full mt-2 min-h-[44px] px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-[12px] transition flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+              >
+                <DocumentCheckIcon className="w-4 h-4 text-surat-green-light" />
+                <span>{isUpdatingStatus ? 'Menyimpan...' : 'Simpan & Sahkan Perubahan'}</span>
+              </button>
+            </form>
+          </CardContainer>
+
+          {/* Card Lembar Disposisi Pimpinan */}
+          <CardContainer
+            title="Lembar Disposisi Pimpinan"
+            subtitle="Pendelegasian tindak lanjut naskah dinas ke unit kerja di lingkungan universitas."
+            badge={<InboxIcon className="w-4 h-4 text-surat-green" />}
+          >
+            <div className="space-y-4">
+              {/* Riwayat Disposisi Timeline */}
+              <div className="space-y-2">
+                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wide block">
+                  Riwayat Disposisi Naskah ({surat.disposisiList?.length || 0})
+                </span>
+                {(!surat.disposisiList || surat.disposisiList.length === 0) ? (
+                  <p className="text-xs text-slate-400 italic p-3 bg-slate-50 rounded-[10px] border border-dashed border-slate-200">
+                    Belum ada instruksi disposisi dari pimpinan untuk naskah ini.
+                  </p>
                 ) : (
-                  <iframe
-                    src={getAssetUrl(surat.lampiranUrl)}
-                    title="Preview Berkas Lampiran PDF / Dokumen"
-                    className="w-full h-[450px] border-0"
-                  />
+                  <div className="space-y-2.5 max-h-56 overflow-y-auto pr-1">
+                    {surat.disposisiList.map((d, index) => (
+                      <div
+                        key={d.id || index}
+                        className="p-3 rounded-[10px] bg-slate-50 border border-slate-200 text-xs space-y-1 relative"
+                      >
+                        <div className="flex items-center justify-between font-bold text-slate-800">
+                          <span className="text-surat-green-dark truncate pr-2">
+                            {d.dariUnit} ➔ {d.keUnit?.nama || 'Unit Terkait'}
+                          </span>
+                          <span className="text-[10px] text-slate-400 font-normal shrink-0">
+                            {new Date(d.createdAt).toLocaleDateString('id-ID')}
+                          </span>
+                        </div>
+                        <p className="text-slate-700 font-medium leading-relaxed">
+                          <strong className="text-slate-900">Instruksi:</strong> {d.instruksi}
+                        </p>
+                        {d.catatan && (
+                          <p className="text-slate-500 text-[11px]">
+                            <strong className="text-slate-600">Catatan:</strong> {d.catatan}
+                          </p>
+                        )}
+                        {d.deadline && (
+                          <div className="pt-1 flex items-center gap-1 text-[10px] text-amber-700 font-semibold">
+                            <ClockIcon className="w-3 h-3 text-amber-600" />
+                            <span>Batas Waktu: {new Date(d.deadline).toLocaleDateString('id-ID')}</span>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
-            </div>
-          </div>
-        )}
-      </div>
 
-      {/* Disposisi History */}
-      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 space-y-4">
-        <h3 className="text-lg font-bold text-slate-900">Riwayat Disposisi Naskah</h3>
-        {surat.disposisiList?.length === 0 ? (
-          <p className="text-xs text-slate-400 italic">Belum ada catatan disposisi pimpinan.</p>
-        ) : (
-          <div className="space-y-3">
-            {surat.disposisiList?.map((d) => (
-              <div key={d.id} className="p-4 rounded-2xl bg-slate-50 border border-slate-100 text-xs space-y-1">
-                <div className="flex justify-between items-center font-bold">
-                  <span className="text-surat-green-dark">{d.dariUnit} ➔ {d.keUnit?.nama}</span>
-                  <span className="text-slate-400 font-normal">{new Date(d.createdAt).toLocaleDateString('id-ID')}</span>
+              {/* Form Tambah Disposisi */}
+              <form onSubmit={handleCreateDisposisi} className="pt-3 border-t border-slate-200 space-y-3 text-xs">
+                <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wide block">
+                  Teruskan Disposisi Baru
+                </span>
+
+                <div>
+                  <label className="text-[11px] font-bold text-slate-600 block mb-1">Diteruskan Ke Unit *</label>
+                  <select
+                    value={keUnitId}
+                    onChange={(e) => setKeUnitId(e.target.value)}
+                    className="w-full px-3 py-2 rounded-[10px] border border-[#CBD5E1] bg-white font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-surat-green-light"
+                  >
+                    {units.map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {u.nama} ({u.kode})
+                      </option>
+                    ))}
+                  </select>
                 </div>
-                <p className="text-slate-700 font-medium">Instruksi: {d.instruksi}</p>
-                {d.catatan && <p className="text-slate-500">Catatan: {d.catatan}</p>}
-              </div>
-            ))}
-          </div>
-        )}
 
-        {/* Form Tambah Disposisi */}
-        <form onSubmit={handleCreateDisposisi} className="pt-4 border-t border-slate-100 space-y-3">
-          <p className="text-xs font-bold text-slate-700">Teruskan Disposisi Baru</p>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div>
-              <label className="text-[11px] font-bold text-slate-500 block mb-1">Diteruskan Ke Unit *</label>
-              <select
-                value={keUnitId}
-                onChange={(e) => setKeUnitId(e.target.value)}
-                className="w-full text-xs p-2.5 rounded-xl border border-slate-200 bg-white"
-              >
-                {units.map((u) => (
-                  <option key={u.id} value={u.id}>{u.nama}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="text-[11px] font-bold text-slate-500 block mb-1">Batas Waktu / Deadline</label>
-              <input
-                type="date"
-                value={deadline}
-                onChange={(e) => setDeadline(e.target.value)}
-                className="w-full text-xs p-2.5 rounded-xl border border-slate-200 bg-white"
-              />
-            </div>
-            <div>
-              <label className="text-[11px] font-bold text-slate-500 block mb-1">Instruksi Disposisi *</label>
-              <input
-                type="text"
-                required
-                value={instruksi}
-                onChange={(e) => setInstruksi(e.target.value)}
-                placeholder="Misal: Tindak lanjuti penerbitan surat"
-                className="w-full text-xs p-2.5 rounded-xl border border-slate-200"
-              />
-            </div>
-          </div>
-          <div>
-            <label className="text-[11px] font-bold text-slate-500 block mb-1">Catatan Tambahan Pimpinan</label>
-            <input
-              type="text"
-              value={catatan}
-              onChange={(e) => setCatatan(e.target.value)}
-              placeholder="Catatan khusus disposisi (opsional)..."
-              className="w-full text-xs p-2.5 rounded-xl border border-slate-200"
-            />
-          </div>
-          <div className="flex justify-end">
-            <button
-              type="submit"
-              className="min-h-[44px] px-5 py-2.5 bg-surat-green hover:bg-surat-green-dark text-white font-bold text-xs rounded-xl flex items-center gap-1.5 transition cursor-pointer"
-            >
-              <PaperAirplaneIcon className="w-3.5 h-3.5" />
-              <span>Kirim Disposisi</span>
-            </button>
-          </div>
-        </form>
-      </div>
+                <div>
+                  <label className="text-[11px] font-bold text-slate-600 block mb-1">Instruksi Disposisi *</label>
+                  <input
+                    type="text"
+                    required
+                    value={instruksi}
+                    onChange={(e) => setInstruksi(e.target.value)}
+                    placeholder="Misal: Tindak lanjuti penerbitan surat tugas..."
+                    className="w-full px-3 py-2 rounded-[10px] border border-[#CBD5E1] text-xs focus:outline-none focus:ring-2 focus:ring-surat-green-light"
+                  />
+                </div>
 
-      {/* Admin Action: Update Status & Pengesahan / Approval TTE */}
-      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-100">
-          <div>
-            <h3 className="text-lg font-bold text-slate-900">Pengesahan & Pembaruan Status Surat</h3>
-            <p className="text-xs text-slate-500">Otorisasi penerbitan nomor surat resmi, pengesahan TTE, dan validasi persetujuan naskah dinas.</p>
-          </div>
-          <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-surat-green-50 text-surat-green-dark border border-surat-green-100 self-start sm:self-auto">
-            Otoritas: Admin / Dekanat / Rektorat
-          </span>
-        </div>
-        
-        <form onSubmit={handleUpdateStatus} className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div>
-              <label className="text-[11px] font-bold text-slate-700 block mb-1">Status Persetujuan Naskah</label>
-              <select
-                value={newStatus}
-                onChange={(e) => setNewStatus(e.target.value)}
-                className="w-full text-xs p-2.5 rounded-xl border border-slate-200 bg-white focus:outline-surat-green font-semibold"
-              >
-                <option value="diajukan">Diajukan (Tahap Permohonan)</option>
-                <option value="diproses">Diproses (Sedang Ditelaah Biro)</option>
-                <option value="disetujui">Disetujui (Disahkan Pimpinan)</option>
-                <option value="selesai">Selesai (Nomor Terbit & Tervalidasi)</option>
-                <option value="ditolak">Ditolak (Perlu Revisi / Tidak Sesuai)</option>
-              </select>
-            </div>
-            
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <label className="text-[11px] font-bold text-slate-700">Nomor Surat Resmi</label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-[11px] font-bold text-slate-600 block mb-1">Batas Waktu (Deadline)</label>
+                    <input
+                      type="date"
+                      value={deadline}
+                      onChange={(e) => setDeadline(e.target.value)}
+                      className="w-full px-3 py-2 rounded-[10px] border border-[#CBD5E1] bg-white text-xs focus:outline-none focus:ring-2 focus:ring-surat-green-light"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-bold text-slate-600 block mb-1">Catatan Tambahan</label>
+                    <input
+                      type="text"
+                      value={catatan}
+                      onChange={(e) => setCatatan(e.target.value)}
+                      placeholder="Opsional..."
+                      className="w-full px-3 py-2 rounded-[10px] border border-[#CBD5E1] text-xs focus:outline-none focus:ring-2 focus:ring-surat-green-light"
+                    />
+                  </div>
+                </div>
+
                 <button
-                  type="button"
-                  onClick={handleGenerateNomor}
-                  disabled={loadingNoSurat}
-                  className="text-[10px] text-surat-green hover:text-surat-green-dark font-bold inline-flex items-center gap-1 cursor-pointer"
-                  title="Generate nomor otomatis berdasarkan template format jenis surat"
+                  type="submit"
+                  disabled={isSubmittingDisposisi}
+                  className="w-full min-h-[44px] px-4 py-2 bg-surat-green hover:bg-surat-green-dark text-white font-bold text-xs rounded-[12px] transition flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
                 >
-                  <PencilSquareIcon className="w-3 h-3" />
-                  <span>{loadingNoSurat ? 'Membuat...' : 'Auto-Generate'}</span>
+                  <PaperAirplaneIcon className="w-3.5 h-3.5" />
+                  <span>{isSubmittingDisposisi ? 'Meneruskan...' : 'Kirim Lembar Disposisi'}</span>
                 </button>
-              </div>
-              <input
-                type="text"
-                value={nomorSurat}
-                onChange={(e) => setNomorSurat(e.target.value)}
-                placeholder="Misal: 046/UNUSU/BAAK/KM/X/2026"
-                className="w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:outline-surat-green font-mono"
-              />
+              </form>
             </div>
-            
-            <div>
-              <label className="text-[11px] font-bold text-slate-700 block mb-1">Pejabat Penandatangan (TTE Digital)</label>
-              <input
-                type="text"
-                value={signedBy}
-                onChange={(e) => setSignedBy(e.target.value)}
-                placeholder="Misal: Prof. Dr. H. Syahrizal, M.A."
-                className="w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:outline-surat-green"
-              />
-            </div>
-          </div>
-
-          {newStatus === 'ditolak' && (
-            <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl">
-              <label className="text-[11px] font-bold text-rose-800 block mb-1">Alasan Penolakan / Catatan Revisi *</label>
-              <textarea
-                rows={2}
-                value={catatanPenolakan}
-                onChange={(e) => setCatatanPenolakan(e.target.value)}
-                placeholder="Tuliskan catatan alasan penolakan berkas permohonan agar dapat diperbaiki..."
-                className="w-full text-xs p-2.5 rounded-xl border border-rose-300 bg-white focus:outline-rose-500"
-              />
-            </div>
-          )}
-
-          <div className="flex justify-end pt-2">
-            <button
-              type="submit"
-              className="min-h-[44px] px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl transition cursor-pointer flex items-center gap-1.5"
-            >
-              <UserPlusIcon className="w-4 h-4 text-surat-green-light" />
-              <span>Simpan & Sahkan Perubahan Status</span>
-            </button>
-          </div>
-        </form>
+          </CardContainer>
+        </div>
       </div>
-    </div>
+    </PageShell>
   );
 };
+
+export default SuratDetail;

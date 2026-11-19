@@ -37,6 +37,9 @@ export const Navbar: React.FC = () => {
   if (location.pathname.startsWith('/admin')) {
     return null;
   }
+  if (location.pathname === '/login' || location.pathname === '/sso/callback') {
+    return null;
+  }
 
   /**
    * True hanya untuk Super Administrator ONE UNUSU.

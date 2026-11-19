@@ -20,6 +20,7 @@ import {
   MagnifyingGlassIcon,
   PaperAirplaneIcon,
   PlusIcon,
+  ShieldCheckIcon,
   TrashIcon,
 } from '@heroicons/react/24/outline';
 
@@ -115,15 +116,35 @@ export const SuratList: React.FC = () => {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'selesai':
-        return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-surat-green-100 text-surat-green-dark"><CheckCircleIcon className="w-3 h-3 mr-1" /> Selesai</span>;
-      case 'diproses':
-        return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-200 text-slate-800"><ClockIcon className="w-3 h-3 mr-1" /> Diproses</span>;
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-surat-green-50 text-surat-green-dark border border-surat-green-200">
+            <CheckCircleIcon className="w-3.5 h-3.5 text-surat-green" /> Selesai
+          </span>
+        );
       case 'disetujui':
-        return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-200 text-slate-700"><CheckCircleIcon className="w-3 h-3 mr-1" /> Disetujui</span>;
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-800 border border-blue-200">
+            <ShieldCheckIcon className="w-3.5 h-3.5 text-blue-600" /> Disetujui
+          </span>
+        );
+      case 'diproses':
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
+            <ClockIcon className="w-3.5 h-3.5 text-amber-600" /> Diproses
+          </span>
+        );
       case 'ditolak':
-        return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-800"><ExclamationCircleIcon className="w-3 h-3 mr-1" /> Ditolak</span>;
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-50 text-rose-800 border border-rose-200">
+            <ExclamationCircleIcon className="w-3.5 h-3.5 text-rose-600" /> Ditolak
+          </span>
+        );
       default:
-        return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800"><ClockIcon className="w-3 h-3 mr-1" /> Diajukan</span>;
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-800 border border-slate-200">
+            <ClockIcon className="w-3.5 h-3.5 text-slate-500" /> Diajukan
+          </span>
+        );
     }
   };
 
